@@ -1,0 +1,26 @@
+﻿<Window x:Class="ProgramInstaller.Config"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configuração" Height="500" Width="800" Icon="Assets/icone.ico" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Button x:Name="btnNovo" Content="Novo" HorizontalAlignment="Left" Margin="10,137,0,0" VerticalAlignment="Top" Width="75" Click="btnNovo_Click"/>
+        <Button x:Name="btnCancelar" Content="Cancelar" HorizontalAlignment="Left" Margin="707,137,0,0" VerticalAlignment="Top" Width="75" IsEnabled="False" Click="btnCancelar_Click"/>
+        <Button x:Name="btnAlterar" Content="Alterar" HorizontalAlignment="Left" Margin="90,137,0,0" VerticalAlignment="Top" Width="75" Click="btnAlterar_Click" />
+        <DataGrid x:Name="dtProgramas" HorizontalAlignment="Left" Margin="10,162,0,0" VerticalAlignment="Top" Height="297" Width="772" SelectionMode="Single" IsReadOnly="True" SelectionChanged="dtProgramas_SelectionChanged" />
+        <Button x:Name="btnExcluir" Content="Excluir" HorizontalAlignment="Left" Margin="170,137,0,0" VerticalAlignment="Top" Width="75" Click="btnExcluir_Click" />
+        <Button x:Name="btnOk" Content="Ok" HorizontalAlignment="Left" Margin="628,137,0,0" VerticalAlignment="Top" Width="75" Click="btnOk_Click" IsEnabled="False"/>
+        <Grid x:Name="gridDados" HorizontalAlignment="Left" Height="122" Margin="10,10,0,0" VerticalAlignment="Top" Width="772" IsEnabled="False">
+            <TextBox x:Name="txtId" HorizontalAlignment="Left" Height="23" Margin="28,15,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="39"/>
+            <Label Content="Id:" HorizontalAlignment="Left" Margin="0,15,0,0" VerticalAlignment="Top"/>
+            <Label Content="Nome:" HorizontalAlignment="Left" Margin="85,15,0,0" VerticalAlignment="Top" Width="46"/>
+            <TextBox x:Name="txtNome" HorizontalAlignment="Left" Height="23" Margin="136,15,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="494"/>
+            <Label Content="Caminho:" HorizontalAlignment="Left" Margin="0,46,0,0" VerticalAlignment="Top" Width="62"/>
+            <TextBox x:Name="txtCaminho" HorizontalAlignment="Left" Height="23" Margin="62,46,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="710"/>
+            <Label Content="Argumentos de execução:" HorizontalAlignment="Left" Margin="0,77,0,0" VerticalAlignment="Top" Width="155"/>
+            <TextBox x:Name="txtArgumentos" HorizontalAlignment="Left" Height="23" Margin="197,77,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="575"/>
+            <CheckBox x:Name="chk32bits" Content="32bits" HorizontalAlignment="Left" Margin="635,21,0,0" VerticalAlignment="Top"/>
+            <CheckBox x:Name="chk64bits" Content="64bits" HorizontalAlignment="Left" Margin="710,21,0,0" VerticalAlignment="Top"/>
+        </Grid>
+
+    </Grid>
+</Window>
