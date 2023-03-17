@@ -1,4 +1,5 @@
-﻿using ProgramInstaller.Models;
+﻿using ProgramInstaller.Helpers;
+using ProgramInstaller.Models;
 using System;
 using System.Data;
 using System.Linq;
@@ -15,26 +16,7 @@ public partial class Config : Window {
     public Config()
     {
         InitializeComponent();
-        GetDados();
-    }
-
-    public void GetDados()
-    {
-        dtProgramas.ItemsSource = null;
-        try {
-            DataSet dsResultado = new DataSet();
-            dsResultado.ReadXml(@"config\config.xml");
-            if (dsResultado.Tables.Count != 0) {
-                if (dsResultado.Tables[0].Rows.Count > 0) {
-                    dtProgramas.ItemsSource = new DataView(dsResultado.Tables["Programa"]);
-                }
-            }
-        }
-        catch (Exception ex) {
-            throw ex;
-        }
-
-        dtProgramas.SelectedIndex = 0;
+        XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
     }
 
     public void InserirDados()
@@ -129,7 +111,7 @@ public partial class Config : Window {
                 }
                 //exibe os dados no gridview                                      
 
-                GetDados();
+                XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
 
                 System.Windows.MessageBox.Show("Dados salvos com sucesso.");
             }
@@ -205,7 +187,7 @@ public partial class Config : Window {
         if (txtId.Text != "") {
             EditarDados(txtId.Text, txtNome.Text, txtCaminho.Text, txtArgumentos.Text, (bool)chk32bits.IsChecked, (bool)chk64bits.IsChecked);
 
-            GetDados();
+            XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
 
             System.Windows.MessageBox.Show("Dados salvos com sucesso.");
         }
@@ -274,13 +256,13 @@ public partial class Config : Window {
                 InserirDados();
                 LimparTela();
                 DesativarEdicao();
-                GetDados();
+                XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
             }
             else {
                 AlterarDados();
                 LimparTela();
                 DesativarEdicao();
-                GetDados();
+                XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
             }
         }
         else {
@@ -322,7 +304,7 @@ public partial class Config : Window {
         if (txtId.Text != "") {
             ExcluirDados(txtId.Text);
             LimparTela();
-            GetDados();
+            XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
         }
         else {
             System.Windows.MessageBox.Show("Selecione um registro clicando duas vezes nele!");

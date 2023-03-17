@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ProgramInstaller.Helpers;
+using System;
 using System.Data;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ public partial class MainWindow : Window {
     public MainWindow()
     {
         InitializeComponent();
-        GetDados();
+        XmlHandler.GetDados(dtProgramas);
     }
 
     private async void Button_Click(object sender, RoutedEventArgs e)
@@ -54,9 +55,11 @@ public partial class MainWindow : Window {
 
     }
 
-    private void chk32bits_Checked(object sender, RoutedEventArgs e) => chk64bits.IsChecked = false;
+    private void chk32bits_Checked(object sender, RoutedEventArgs e) => 
+        chk64bits.IsChecked = false;
 
-    private void chk64bits_Checked(object sender, RoutedEventArgs e) => chk32bits.IsChecked = false;
+    private void chk64bits_Checked(object sender, RoutedEventArgs e) => 
+        chk32bits.IsChecked = false;
 
 
     private void Button_Click_1(object sender, RoutedEventArgs e)
