@@ -19,108 +19,6 @@ public partial class Config : Window {
         XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
     }
 
-    public void InserirDados()
-    {
-        try {
-            using (DataSet dsResultado = new DataSet()) {
-                dsResultado.ReadXml(@"config\config.xml");
-                if (dsResultado.Tables.Count == 0) {
-                    //cria uma instância do Produto e atribui valores às propriedades
-                    Programa programa = new Programa();
-                    programa.Id = Convert.ToInt32(txtId.Text);
-                    programa.Nome = txtNome.Text;
-                    programa.Caminho = txtCaminho.Text;
-                    programa.Argumentos = txtArgumentos.Text;
-
-                    if (chk32bits.IsChecked == true) {
-                        programa.x86 = "S";
-                    }
-                    else {
-                        programa.x86 = "N";
-                    }
-
-                    if (chk64bits.IsChecked == true) {
-                        programa.x64 = "S";
-                    }
-                    else {
-                        programa.x64 = "N";
-                    }
-
-                    XmlTextWriter writer = new XmlTextWriter(@"config\config.xml", System.Text.Encoding.UTF8);
-                    writer.WriteStartDocument(true);
-                    writer.Formatting = Formatting.Indented;
-                    writer.Indentation = 2;
-
-                    writer.WriteStartElement("Programas");
-                    writer.WriteStartElement("Programa");
-
-                    writer.WriteStartElement("Id");
-                    writer.WriteString(programa.Id.ToString());
-                    writer.WriteEndElement();
-
-                    writer.WriteStartElement("Nome");
-                    writer.WriteString(programa.Nome);
-                    writer.WriteEndElement();
-
-                    writer.WriteStartElement("Caminho");
-                    writer.WriteString(programa.Caminho.ToString());
-                    writer.WriteEndElement();
-
-                    writer.WriteStartElement("Argumentos");
-                    writer.WriteString(programa.Argumentos.ToString());
-                    writer.WriteEndElement();
-
-                    writer.WriteStartElement("x86");
-                    writer.WriteString(programa.x86);
-                    writer.WriteEndElement();
-
-                    writer.WriteStartElement("x64");
-                    writer.WriteString(programa.x64);
-                    writer.WriteEndElement();
-
-                    writer.WriteEndElement();
-                    writer.WriteEndDocument();
-                    writer.Close();
-                    dsResultado.ReadXml(@"config\config.xml");
-                }
-                else {
-                    //inclui os dados no DataSet
-                    dsResultado.Tables[0].Rows.Add(dsResultado.Tables[0].NewRow());
-                    dsResultado.Tables[0].Rows[dsResultado.Tables[0].Rows.Count - 1]["Id"] = txtId.Text;
-                    dsResultado.Tables[0].Rows[dsResultado.Tables[0].Rows.Count - 1]["Nome"] = txtNome.Text;
-                    dsResultado.Tables[0].Rows[dsResultado.Tables[0].Rows.Count - 1]["Caminho"] = txtCaminho.Text;
-                    dsResultado.Tables[0].Rows[dsResultado.Tables[0].Rows.Count - 1]["Argumentos"] = txtArgumentos.Text;
-
-                    if (chk32bits.IsChecked == true) {
-                        dsResultado.Tables[0].Rows[dsResultado.Tables[0].Rows.Count - 1]["x86"] = "S";
-                    }
-                    else {
-                        dsResultado.Tables[0].Rows[dsResultado.Tables[0].Rows.Count - 1]["x86"] = "N";
-                    }
-
-                    if (chk64bits.IsChecked == true) {
-                        dsResultado.Tables[0].Rows[dsResultado.Tables[0].Rows.Count - 1]["x64"] = "S";
-                    }
-                    else {
-                        dsResultado.Tables[0].Rows[dsResultado.Tables[0].Rows.Count - 1]["x64"] = "N";
-                    }
-
-                    dsResultado.AcceptChanges();
-                    //--  Escreve para o arquivo XML final usando o método Write
-                    dsResultado.WriteXml(@"config\config.xml", XmlWriteMode.IgnoreSchema);
-                }
-                //exibe os dados no gridview                                      
-
-                XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
-
-                System.Windows.MessageBox.Show("Dados salvos com sucesso.");
-            }
-        }
-        catch (Exception ex) {
-            throw ex;
-        }
-    }
-
     private void dtProgramas_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         DataRowView dt = (DataRowView)dtProgramas.SelectedItem;
@@ -148,44 +46,10 @@ public partial class Config : Window {
         }
     }
 
-    public static void EditarDados(string txtId, string txtNome, string txtCaminho, string txtArgumentos, bool x86, bool x64)
-    {
-        try {
-            XElement xml = XElement.Load(@"config\config.xml");
-            XElement x = xml.Elements().Where(p => p.Element("Id").Value == txtId).First();
-
-            if (x != null) {
-                x.Element("Nome").SetValue(txtNome);
-                x.Element("Caminho").SetValue(txtCaminho);
-                x.Element("Argumentos").SetValue(txtArgumentos);
-
-                if (x86 == true) {
-                    x.Element("x86").SetValue("S");
-                }
-                else {
-                    x.Element("x86").SetValue("N");
-                }
-
-                if (x64 == true) {
-                    x.Element("x64").SetValue("S");
-                }
-                else {
-                    x.Element("x64").SetValue("N");
-                }
-
-            }
-            xml.Save(@"config\config.xml");
-        }
-        catch (Exception ex) {
-
-            throw ex;
-        }
-    }
-
     private void AlterarDados()
     {
         if (txtId.Text != "") {
-            EditarDados(txtId.Text, txtNome.Text, txtCaminho.Text, txtArgumentos.Text, (bool)chk32bits.IsChecked, (bool)chk64bits.IsChecked);
+            XmlHandler.EditarDados(txtId.Text, txtNome.Text, txtCaminho.Text, txtArgumentos.Text, (bool)chk32bits.IsChecked, (bool)chk64bits.IsChecked);
 
             XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
 
@@ -193,24 +57,6 @@ public partial class Config : Window {
         }
         else {
             System.Windows.MessageBox.Show("Preencha o Campo Id!!!");
-        }
-
-    }
-
-    private void ExcluirDados(string txtId)
-    {
-        if (txtId != "") {
-            XElement xml = XElement.Load(@"config\config.xml");
-            XElement x = xml.Elements().Where(p => p.Element("Id").Value == txtId).First();
-            if (x != null) {
-                x.Remove();
-            }
-            xml.Save("config.xml");
-
-            System.Windows.MessageBox.Show("Registro excluído com sucesso!");
-        }
-        else {
-            System.Windows.MessageBox.Show("Selecione um registro clicando duas vezes nele!");
         }
 
     }
@@ -253,7 +99,7 @@ public partial class Config : Window {
     {
         if (txtId.Text != "") {
             if (this.Title == "Configuração - Inserindo Novo") {
-                InserirDados();
+                XmlHandler.InserirDados(this);
                 LimparTela();
                 DesativarEdicao();
                 XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
@@ -266,10 +112,8 @@ public partial class Config : Window {
             }
         }
         else {
-            System.Windows.MessageBox.Show("Preencha o Campo Id!!!");
+            MessageBox.Show("Preencha o Campo Id!!!");
         }
-
-
     }
 
     private void btnCancelar_Click(object sender, RoutedEventArgs e)
@@ -302,7 +146,7 @@ public partial class Config : Window {
     {
 
         if (txtId.Text != "") {
-            ExcluirDados(txtId.Text);
+            XmlHandler.ExcluirDados(txtId.Text);
             LimparTela();
             XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
         }
