@@ -98,7 +98,7 @@ public partial class Config : Window {
     private void btnOk_Click(object sender, RoutedEventArgs e)
     {
         if (txtId.Text != "") {
-            if (this.Title == "Configuração - Inserindo Novo") {
+            if (this.Title.Contains("Configuração - Inserindo Novo")) {
                 XmlHandler.InserirDados(this);
                 LimparTela();
                 DesativarEdicao();
