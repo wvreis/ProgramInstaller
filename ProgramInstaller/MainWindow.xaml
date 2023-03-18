@@ -25,7 +25,7 @@
                 Margin="311,416,0,0" 
                 VerticalAlignment="Top" 
                 Width="75" 
-                Click="Button_Click"/>
+                Click="Button_Click_Instalar"/>
             
             <Label 
                 Content="Clique Instalar para começar e mantenha o instalador aberto até o final." 
@@ -98,7 +98,7 @@
                 Margin="10,416,0,0" 
                 VerticalAlignment="Top" 
                 Width="75" 
-                Click="Button_Click_1" 
+                Click="Button_Click_Config" 
                 Grid.Column="1"/>
             
             <DataGrid 
@@ -136,7 +136,7 @@
                 VerticalAlignment="Top" 
                 Width="170" 
                 Grid.ColumnSpan="2" 
-                Click="Button_Click_2" 
+                Click="Button_Click_OK" 
                 Visibility="Hidden"/>
 
         </Grid>

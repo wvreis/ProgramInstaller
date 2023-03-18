@@ -9,51 +9,31 @@ namespace ProgramInstaller;
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public partial class MainWindow : Window {
+public partial class MainWindow : Window
+{
+    bool isInstalling = false;
+
     public MainWindow()
     {
         InitializeComponent();
         XmlHandler.GetDados(dtProgramas);
     }
 
-    private async void Button_Click(object sender, RoutedEventArgs e)
+    #region EVENTS
+    private async void Button_Click_Instalar(object sender, RoutedEventArgs e)
     {
         await IniciarInstalcao();
     }
-
-    private async Task IniciarInstalcao()
+    
+    private void Button_Click_Config(object sender, RoutedEventArgs e)
     {
-        try {
-            if (chk32bits.IsChecked == true || chk64bits.IsChecked == true) {
-                dtProgramas.Visibility = Visibility.Hidden;
-                btnConfig.Visibility = Visibility.Hidden;
-                btnInstalar.Visibility = Visibility.Hidden;
-                txtProgresso.Visibility = Visibility.Visible;
+        Config Config = new();
+        Hide();
+        Config.Show();
+    }    
 
-                foreach (System.Data.DataRowView dt in dtProgramas.ItemsSource) {
-                    if (dt.Row.ItemArray[4].ToString() == "S" && chk32bits.IsChecked == true) {
-                        txtProgresso.AppendText("Instalando " + dt.Row.ItemArray[1].ToString() + ". \n");
-                        await Task.Run(() => Process.Start(dt.Row.ItemArray[2].ToString(), dt.Row.ItemArray[3].ToString()).WaitForExit());
-                    }
-                    else if (dt.Row.ItemArray[5].ToString() == "S" && chk64bits.IsChecked == true) {
-                        txtProgresso.AppendText("Instalando " + dt.Row.ItemArray[1].ToString() + ". \n");
-                        await Task.Run(() => Process.Start(dt.Row.ItemArray[2].ToString(), dt.Row.ItemArray[3].ToString()).WaitForExit());
-                    }
-                }
-
-                txtProgresso.AppendText("Concluído!");
-                btnOK.Visibility = Visibility.Visible;
-            }
-            else {
-                MessageBox.Show("Selecione a arquitetura do S.O.");
-            }
-        }
-        catch (Exception ex) {
-
-            MessageBox.Show(ex.Message);
-        }
-
-    }
+    private void Button_Click_OK(object sender, RoutedEventArgs e) =>    
+       ChangeFieldsVisibility();    
 
     private void chk32bits_Checked(object sender, RoutedEventArgs e) => 
         chk64bits.IsChecked = false;
@@ -61,43 +41,76 @@ public partial class MainWindow : Window {
     private void chk64bits_Checked(object sender, RoutedEventArgs e) => 
         chk32bits.IsChecked = false;
 
+    private void Window_Closed(object sender, EventArgs e) =>    
+        Environment.Exit(0);
+    
+    #endregion
 
-    private void Button_Click_1(object sender, RoutedEventArgs e)
+    async Task IniciarInstalcao()
     {
-        Config Config = new Config();
-        this.Hide();
-        Config.Show();
+        if (!isArquituraChecked()) {
+            MessageBox.Show("Selecione a arquitetura do S.O.");
+            return;
+        }
+
+        isInstalling = true;
+
+        ChangeFieldsVisibility();
+
+        await ExecuteCommands();
+
+        txtProgresso.AppendText("Concluído!");
+
+        isInstalling = false;
+
+        btnOK.Visibility = Visibility.Visible;                    
     }
 
-    private void GetDados()
+    async Task ExecuteCommands()
     {
-        try {
-            DataSet dsResultado = new DataSet();
-            dsResultado.ReadXml(@"config\config.xml");
-            if (dsResultado.Tables.Count != 0) {
-                if (dsResultado.Tables[0].Rows.Count > 0) {
-                    dtProgramas.ItemsSource = new DataView(dsResultado.Tables["Programa"]);
+        foreach (DataRowView dt in dtProgramas.ItemsSource) {
+            try {
+                if (is32bitsCommand(dt) || is64BitsCommand(dt)) {
+                    txtProgresso.AppendText("Instalando " + dt.Row.ItemArray[1].ToString() + ". \n");
+
+                    await Task.Run(() => 
+                        Process.Start(dt.Row.ItemArray[2].ToString(), dt.Row.ItemArray[3].ToString()).WaitForExit()
+                    );
                 }
             }
+            catch (Exception ex) {
+                MessageBox.Show(ex.Message);
+            }
         }
-        catch (Exception ex) {
-            throw ex;
+    }
+
+    void ChangeFieldsVisibility()
+    {
+        if(isInstalling) {
+            dtProgramas.Visibility = Visibility.Hidden;
+            btnConfig.Visibility = Visibility.Hidden;
+            btnInstalar.Visibility = Visibility.Hidden;
+            txtProgresso.Visibility = Visibility.Visible;
+        }
+        else {
+            btnOK.Visibility = Visibility.Hidden;
+            txtProgresso.Visibility = Visibility.Hidden;
+            dtProgramas.Visibility = Visibility.Visible;
+            btnConfig.Visibility = Visibility.Visible;
+            btnInstalar.Visibility = Visibility.Visible;
+
+            txtProgresso.Text = string.Empty;
         }
     }
 
-    private void Window_Closed(object sender, EventArgs e)
-    {
-        Environment.Exit(0);
-    }
+    #region VALIDATIONS
+    bool isArquituraChecked() => 
+        chk32bits.IsChecked == true || chk64bits.IsChecked == true;
 
-    private void Button_Click_2(object sender, RoutedEventArgs e)
-    {
-        btnOK.Visibility = Visibility.Hidden;
-        txtProgresso.Visibility = Visibility.Hidden;
-        dtProgramas.Visibility = Visibility.Visible;
-        btnConfig.Visibility = Visibility.Visible;
-        btnInstalar.Visibility = Visibility.Visible;
+    bool is32bitsCommand(DataRowView dt) =>
+        dt.Row.ItemArray[4].ToString() == "S" && chk32bits.IsChecked == true;
 
-        txtProgresso.Text = string.Empty;
-    }
+    bool is64BitsCommand(DataRowView dt) =>
+        dt.Row.ItemArray[5].ToString() == "S" && chk64bits.IsChecked == true;
+    #endregion
 }
