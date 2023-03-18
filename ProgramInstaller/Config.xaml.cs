@@ -12,14 +12,15 @@ namespace ProgramInstaller;
 /// Interaction logic for Config.xaml
 /// </summary>
 public partial class Config : Window {
-    List<Programa> programas { get; set; } = new();
+    Programas programas { get; set; } = new();
 
     public Config()
     {
         InitializeComponent();
         XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
 
-        programas.Add(new() { 
+        //todo: apagar esse teste
+        programas.ListaProgramas.Add(new() { 
             Id = 1,
             Nome = "Teste",
             Argumentos = string.Empty,

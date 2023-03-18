@@ -3,6 +3,11 @@
 namespace ProgramInstaller.Models;
 public class Programas {
     public List<Programa> ListaProgramas { get; set; }
+
+    public Programas()
+    {
+        ListaProgramas = new();
+    }
 }
 
 public class Programa {
