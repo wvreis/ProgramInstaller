@@ -3,9 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ProgramInstaller"
         mc:Ignorable="d"
-        Title="Instalador de Programas" Height="500" Width="800" WindowStartupLocation="CenterScreen" Icon="Assets/icone.ico" Closed="Window_Closed">
+        Title="Instalador de Programas" 
+        Height="500" 
+        Width="800" 
+        WindowStartupLocation="CenterScreen" 
+        Icon="Assets/icone.ico" 
+        Closed="Window_Closed">
+
     <Grid>
         <Grid Margin="0,0,0,0">
             <Grid.ColumnDefinitions>
@@ -13,21 +18,128 @@
                 <ColumnDefinition Width="50*"/>
             </Grid.ColumnDefinitions>
 
-            <Button x:Name="btnInstalar" Content="Instalar" HorizontalAlignment="Left" Margin="311,416,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click"/>
-            <Label Content="Clique Instalar para começar e mantenha o instalador aberto até o final." HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="28" Width="772" RenderTransformOrigin="0.5,0.5" HorizontalContentAlignment="Center" FontSize="13" FontWeight="Bold" Grid.ColumnSpan="2"/>
-            <Label Content="wv.reis@gmail.com" HorizontalAlignment="Left" Margin="274,431,0,0" VerticalAlignment="Top" Height="28" Width="112" RenderTransformOrigin="0.5,0.5" HorizontalContentAlignment="Center" FontSize="11" Grid.Column="1"/>
-            <Grid Grid.ColumnSpan="2" Margin="253,43,267,395">
-                <Label Content="Arquiterura do S.O.:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="139"/>
-                <CheckBox x:Name="chk32bits" Content="" HorizontalAlignment="Left" Margin="118,6,0,0" VerticalAlignment="Top" Checked="chk32bits_Checked"/>
-                <Label Content="32 Bits" HorizontalAlignment="Left" Margin="143,0,0,0" VerticalAlignment="Top" Width="55"/>
-                <CheckBox x:Name="chk64bits" Content="" HorizontalAlignment="Left" Margin="209,6,0,0" VerticalAlignment="Top" Checked="chk64bits_Checked"/>
-                <Label Content="64 Bits" HorizontalAlignment="Left" Margin="228,0,0,0" VerticalAlignment="Top" Width="55"/>
+            <Button 
+                x:Name="btnInstalar" 
+                Content="Instalar" 
+                HorizontalAlignment="Left" 
+                Margin="311,416,0,0" 
+                VerticalAlignment="Top" 
+                Width="75" 
+                Click="Button_Click"/>
+            
+            <Label 
+                Content="Clique Instalar para começar e mantenha o instalador aberto até o final." 
+                HorizontalAlignment="Left" 
+                Margin="10,10,0,0" 
+                VerticalAlignment="Top" 
+                Height="28" 
+                Width="772" 
+                RenderTransformOrigin="0.5,0.5" 
+                HorizontalContentAlignment="Center" 
+                FontSize="13" 
+                FontWeight="Bold" 
+                Grid.ColumnSpan="2"/>
+            
+            <Label 
+                Content="wv.reis@gmail.com" 
+                HorizontalAlignment="Left" 
+                Margin="274,431,0,0" 
+                VerticalAlignment="Top" 
+                Height="28" 
+                Width="112" 
+                RenderTransformOrigin="0.5,0.5" 
+                HorizontalContentAlignment="Center" 
+                FontSize="11" Grid.Column="1"/>
+            
+            <Grid Grid.ColumnSpan="2" Margin="240,43,240,395">
+                
+                <Label 
+                    Content="Arquitetura do S.O.:" 
+                    HorizontalAlignment="Left" 
+                    VerticalAlignment="Top" 
+                    Width="139"/>
+                
+                <CheckBox 
+                    x:Name="chk32bits" 
+                    Content="" 
+                    HorizontalAlignment="Left" 
+                    Margin="118,6,0,0" 
+                    VerticalAlignment="Top" 
+                    Checked="chk32bits_Checked"/>
+                
+                <Label 
+                    Content="32 Bits" 
+                    HorizontalAlignment="Left" 
+                    Margin="143,0,0,0" 
+                    VerticalAlignment="Top" 
+                    Width="60"/>
+                
+                <CheckBox 
+                    x:Name="chk64bits" 
+                    Content="" 
+                    HorizontalAlignment="Left"
+                    Margin="209,6,0,0" 
+                    VerticalAlignment="Top" 
+                    Checked="chk64bits_Checked"/>
+                
+                <Label 
+                    Content="64 Bits" 
+                    HorizontalAlignment="Left" 
+                    Margin="228,0,0,0" 
+                    VerticalAlignment="Top" 
+                    Width="60"/>
+            
             </Grid>
-            <Button x:Name="btnConfig" Content="Configuração" HorizontalAlignment="Left" Margin="10,416,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_1" Grid.Column="1"/>
-            <DataGrid x:Name="dtProgramas" HorizontalAlignment="Left" Margin="10,90,0,0" VerticalAlignment="Top" Height="300" Width="772" IsReadOnly="True" Grid.ColumnSpan="2"/>
-            <TextBox x:Name="txtProgresso" HorizontalAlignment="Left" Height="311" Margin="10,79,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="772" FontWeight="Bold" IsReadOnlyCaretVisible="True" Background="#FF212121" Foreground="#FF1DA81D" IsReadOnly="True" ScrollViewer.CanContentScroll="True" Grid.ColumnSpan="2" Visibility="Hidden"/>
-            <Button x:Name="btnOK" Content="OK!" HorizontalAlignment="Left" Margin="311,416,0,0" VerticalAlignment="Top" Width="170" Grid.ColumnSpan="2" Click="Button_Click_2" Visibility="Hidden"/>
+            
+            <Button 
+                x:Name="btnConfig" 
+                Content="Configuração" 
+                HorizontalAlignment="Left" 
+                Margin="10,416,0,0" 
+                VerticalAlignment="Top" 
+                Width="75" 
+                Click="Button_Click_1" 
+                Grid.Column="1"/>
+            
+            <DataGrid 
+                x:Name="dtProgramas" 
+                HorizontalAlignment="Left"
+                Margin="10,90,10,90" 
+                VerticalAlignment="Top" 
+                Height="300" 
+                Width="772" 
+                IsReadOnly="True" 
+                Grid.ColumnSpan="2"/>
+            
+            <TextBox 
+                x:Name="txtProgresso" 
+                HorizontalAlignment="Left" 
+                Height="311" 
+                Margin="10,79,0,0" 
+                TextWrapping="Wrap" 
+                VerticalAlignment="Top" 
+                Width="772" 
+                FontWeight="Bold" 
+                IsReadOnlyCaretVisible="True" 
+                Background="#FF212121" 
+                Foreground="#FF1DA81D" 
+                IsReadOnly="True" 
+                ScrollViewer.CanContentScroll="True"
+                Grid.ColumnSpan="2" 
+                Visibility="Hidden"/>
+            
+            <Button 
+                x:Name="btnOK" 
+                Content="OK!" 
+                HorizontalAlignment="Left" 
+                Margin="311,416,0,0" 
+                VerticalAlignment="Top" 
+                Width="170" 
+                Grid.ColumnSpan="2" 
+                Click="Button_Click_2" 
+                Visibility="Hidden"/>
 
         </Grid>
     </Grid>
+    
 </Window>
