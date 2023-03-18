@@ -1,22 +1,38 @@
-﻿using ProgramInstaller.Helpers;
+﻿using ProgramInstaller.Controllers;
+using ProgramInstaller.Helpers;
 using ProgramInstaller.Models;
 using System;
+using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Xml;
-using System.Xml.Linq;
 
 namespace ProgramInstaller;
 /// <summary>
 /// Interaction logic for Config.xaml
 /// </summary>
 public partial class Config : Window {
+    List<Programa> programas { get; set; } = new();
+
     public Config()
     {
         InitializeComponent();
         XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
+
+        programas.Add(new() { 
+            Id = 1,
+            Nome = "Teste",
+            Argumentos = string.Empty,
+            Caminho = "winget",
+            x64 = "S",
+            x86 = "S"
+        });
+
+        new ConfigController().Save(programas);
+
+        programas = null;
+
+        programas = new ConfigController().Load();
     }
 
     private void dtProgramas_SelectionChanged(object sender, SelectionChangedEventArgs e)
