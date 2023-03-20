@@ -1,6 +1,6 @@
-﻿using ProgramInstaller.Helpers;
+﻿using ProgramInstaller.Controllers;
+using ProgramInstaller.Models;
 using System;
-using System.Data;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,28 +10,30 @@ namespace ProgramInstaller;
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 public partial class MainWindow : Window {
+    Programas? Programas { get; set; }
     bool isInstalling = false;
 
     public MainWindow()
     {
         InitializeComponent();
-        XmlHandler.GetDados(dtProgramas);
+        Programas = new ConfigController().Load();
+        dtProgramas.ItemsSource = Programas?.ListaProgramas;
     }
 
     #region EVENTS
-    private async void Button_Click_Instalar(object sender, RoutedEventArgs e)
+    private async void btnInstalar_Click(object sender, RoutedEventArgs e)
     {
-        await IniciarInstalcao();
+        await StartProgram();
     }
 
-    private void Button_Click_Config(object sender, RoutedEventArgs e)
+    private void btnConfig_Click(object sender, RoutedEventArgs e)
     {
         Config Config = new();
         Hide();
         Config.Show();
     }
 
-    private void Button_Click_OK(object sender, RoutedEventArgs e) =>
+    private void btnOK_Click(object sender, RoutedEventArgs e) =>
        ChangeFieldsVisibility();
 
     private void chk32bits_Checked(object sender, RoutedEventArgs e) =>
@@ -45,7 +47,7 @@ public partial class MainWindow : Window {
 
     #endregion
 
-    async Task IniciarInstalcao()
+    async Task StartProgram()
     {
         if (!IsArquituraChecked()) {
             MessageBox.Show("Selecione a arquitetura do S.O.");
@@ -67,15 +69,15 @@ public partial class MainWindow : Window {
 
     async Task ExecuteCommands()
     {
-        foreach (DataRowView dt in dtProgramas.ItemsSource) {
+        foreach (Programa programa in dtProgramas.Items) {
             try {
-                if (Is32bitsCommand(dt) || Is64BitsCommand(dt)) {
-                    txtProgresso.AppendText($"Instalando {dt.Row.ItemArray[1]?.ToString() ?? string.Empty}. \n");
+                if (is32bitsCommand(programa) || is64BitsCommand(programa)) {
+                    txtProgresso.AppendText($"Instalando {programa.Nome ?? string.Empty}. \n");
 
                     await Task.Run(() =>
                         Process.Start(
-                            dt.Row.ItemArray[2]?.ToString() ?? string.Empty,
-                            dt.Row.ItemArray[3]?.ToString() ?? string.Empty)
+                            programa.Caminho ?? string.Empty,
+                            programa.Argumentos ?? string.Empty)
                         .WaitForExit());
                 }
             }
@@ -108,10 +110,10 @@ public partial class MainWindow : Window {
     bool IsArquituraChecked() =>
         chk32bits.IsChecked == true || chk64bits.IsChecked == true;
 
-    bool Is32bitsCommand(DataRowView dt) =>
-        dt.Row.ItemArray[4]?.ToString() == "S" && chk32bits.IsChecked == true;
+    bool is32bitsCommand(Programa programa) =>
+        programa.x86 == "S" && chk32bits.IsChecked == true;
 
-    bool Is64BitsCommand(DataRowView dt) =>
-        dt.Row.ItemArray[5]?.ToString() == "S" && chk64bits.IsChecked == true;
+    bool is64BitsCommand(Programa programa) =>
+        programa.x64 == "S" && chk64bits.IsChecked == true;
     #endregion
 }

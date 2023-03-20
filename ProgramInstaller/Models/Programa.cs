@@ -1,11 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace ProgramInstaller.Models;
-class Programa {
+public class Programas {
+    public List<Programa> ListaProgramas { get; set; }
+
+    public Programas()
+    {
+        ListaProgramas = new();
+    }
+}
+
+public class Programa {
     public int Id { get; set; }
     public string Nome { get; set; }
     public string Caminho { get; set; }
