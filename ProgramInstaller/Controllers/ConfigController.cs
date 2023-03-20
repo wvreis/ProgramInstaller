@@ -13,7 +13,7 @@ public class ConfigController  {
     {
         try {
             XmlSerializer? ser = new XmlSerializer(typeof(Programas));
-            FileStream fs = new FileStream(@"config\configN.xml", FileMode.OpenOrCreate);
+            FileStream fs = new FileStream(@"config\config.xml", FileMode.OpenOrCreate);
             
             var programas = ser.Deserialize(fs) as Programas;
 
@@ -27,7 +27,7 @@ public class ConfigController  {
     public void Save(Programas programas)
     {
         XmlSerializer ser = new XmlSerializer(typeof(Programas));
-        FileStream fs = new FileStream(@"config\configN.xml", FileMode.OpenOrCreate);
+        FileStream fs = new FileStream(@"config\config.xml", FileMode.OpenOrCreate);
         ser.Serialize(fs, programas);
         fs.Close();
     }

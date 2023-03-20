@@ -1,9 +1,6 @@
 ﻿using ProgramInstaller.Controllers;
-using ProgramInstaller.Helpers;
 using ProgramInstaller.Models;
 using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -12,73 +9,112 @@ namespace ProgramInstaller;
 /// Interaction logic for Config.xaml
 /// </summary>
 public partial class Config : Window {
-    Programas? programas { get; set; } = new();
+    Programas? Programas { get; set; } = new();
+    Programa? SelectedPrograma { get; set; }
+    int SelectedProgramaIndex { get; set; }
 
     public Config()
     {
         InitializeComponent();
-        XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
 
-        //todo: apagar esse teste
-        programas.ListaProgramas.Add(new() { 
-            Id = 1,
-            Nome = "Teste",
-            Argumentos = string.Empty,
-            Caminho = "winget",
-            x64 = "S",
-            x86 = "S"
-        });
-
-        new ConfigController().Save(programas);
-
-        programas = null;
-
-        programas = new ConfigController().Load();
+        Programas = new ConfigController().Load();
+        dtProgramas.ItemsSource = Programas?.ListaProgramas;
+        dtProgramas.SelectedIndex = 0;
     }
 
+    #region EVENTS
     private void dtProgramas_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        DataRowView dt = (DataRowView)dtProgramas.SelectedItem;
+        SelectedPrograma = (Programa?)dtProgramas.SelectedItem;
+        SelectedProgramaIndex = dtProgramas.SelectedIndex;
 
-        if (dt is null)
+        LoadFileds();
+    }
+
+    private void btnOk_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(txtId.Text)) {
+            MessageBox.Show("Preencha o Campo Id!!!");
+            return;
+        }
+
+        SaveFileds();
+
+        if (dtProgramas.SelectedIndex != SelectedProgramaIndex)
+            CleanFields();
+
+        if (Title.Contains("Configuração - Inserindo Novo"))
+            Programas?.ListaProgramas.Add(SelectedPrograma);
+
+        DisableEdition();
+
+        dtProgramas.Items.Refresh();
+
+        new ConfigController().Save(Programas);
+
+        dtProgramas.SelectedIndex = SelectedProgramaIndex;
+
+        MessageBox.Show("Dados salvos com sucesso.");
+
+        Title = "Configuração";
+
+    }
+
+    private void btnCancelar_Click(object sender, RoutedEventArgs e)
+    {
+        CleanFields();
+        DisableEdition();
+        Title = "Configuração";
+        dtProgramas.Items.Refresh();
+    }
+
+    private void btnNovo_Click(object sender, RoutedEventArgs e)
+    {
+        SelectedPrograma = new();
+
+        CleanFields();
+        EnableEdition();
+        Title += " - Inserindo Novo";
+    }
+
+    private void btnAlterar_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(txtId.Text)) {
+            MessageBox.Show("Selecione um registro clicando duas vezes nele!");
+            return;
+        }
+
+        EnableEdition();
+        Title += " - Alterando";
+    }
+
+    private void btnExcluir_Click(object sender, RoutedEventArgs e)
+    {
+        var dialogResult = MessageBox.Show("Deseja Confirmar a Exclusão do Registro Selecioando?", "Exclusão", MessageBoxButton.YesNo);
+
+        if (dialogResult == MessageBoxResult.No)
             return;
 
-        txtId.Text = dt.Row.ItemArray[0].ToString();
-        txtNome.Text = dt.Row.ItemArray[1].ToString();
-        txtCaminho.Text = dt.Row.ItemArray[2].ToString();
-        txtArgumentos.Text = dt.Row.ItemArray[3].ToString();
-
-        if (dt.Row.ItemArray[4].ToString() == "S") {
-            chk32bits.IsChecked = true;
-        }
-        else {
-            chk32bits.IsChecked = false;
+        if (string.IsNullOrEmpty(txtId.Text)) {
+            MessageBox.Show("Selecione um registro clicando duas vezes nele!");
+            return;
         }
 
-        if (dt.Row.ItemArray[5].ToString() == "S") {
-            chk64bits.IsChecked = true;
-        }
-        else {
-            chk64bits.IsChecked = false;
-        }
+        Programas.ListaProgramas.Remove(SelectedPrograma);
+        CleanFields();
+        dtProgramas.Items.Refresh();
     }
 
-    private void AlterarDados()
+    protected override void OnClosed(EventArgs e)
     {
-        if (txtId.Text != "") {
-            XmlHandler.EditarDados(txtId.Text, txtNome.Text, txtCaminho.Text, txtArgumentos.Text, (bool)chk32bits.IsChecked, (bool)chk64bits.IsChecked);
-
-            XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
-
-            System.Windows.MessageBox.Show("Dados salvos com sucesso.");
-        }
-        else {
-            System.Windows.MessageBox.Show("Preencha o Campo Id!!!");
-        }
-
+        MainWindow mainWindow = new MainWindow();
+        this.Close();
+        mainWindow.Show();
     }
+    #endregion
 
-    private void AtivarEdicao()
+    #region AUXILIARY METHODS
+    private void EnableEdition()
     {
         gridDados.IsEnabled = true;
         btnAlterar.IsEnabled = false;
@@ -90,7 +126,7 @@ public partial class Config : Window {
         btnCancelar.IsEnabled = true;
     }
 
-    private void DesativarEdicao()
+    private void DisableEdition()
     {
         gridDados.IsEnabled = false;
         btnAlterar.IsEnabled = true;
@@ -102,7 +138,7 @@ public partial class Config : Window {
         btnCancelar.IsEnabled = false;
     }
 
-    private void LimparTela()
+    private void CleanFields()
     {
         txtId.Text = "";
         txtNome.Text = "";
@@ -112,71 +148,27 @@ public partial class Config : Window {
         chk64bits.IsChecked = false;
     }
 
-    private void btnOk_Click(object sender, RoutedEventArgs e)
+    void LoadFileds()
     {
-        if (txtId.Text != "") {
-            if (this.Title.Contains("Configuração - Inserindo Novo")) {
-                XmlHandler.InserirDados(this);
-                LimparTela();
-                DesativarEdicao();
-                XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
-            }
-            else {
-                AlterarDados();
-                LimparTela();
-                DesativarEdicao();
-                XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
-            }
-        }
-        else {
-            MessageBox.Show("Preencha o Campo Id!!!");
-        }
+        if (SelectedPrograma is null)
+            return;
+
+        txtId.Text = SelectedPrograma.Id.ToString();
+        txtNome.Text = SelectedPrograma.Nome.ToString();
+        txtCaminho.Text = SelectedPrograma.Caminho.ToString();
+        txtArgumentos.Text = SelectedPrograma.Argumentos.ToString();
+        chk32bits.IsChecked = SelectedPrograma.x86 == "S" ? true : false;
+        chk64bits.IsChecked = SelectedPrograma.x64 == "S" ? true : false;
     }
 
-    private void btnCancelar_Click(object sender, RoutedEventArgs e)
+    void SaveFileds()
     {
-        LimparTela();
-        DesativarEdicao();
-        this.Title = "Configuração";
+        SelectedPrograma.Id = Convert.ToInt32(txtId.Text);
+        SelectedPrograma.Nome = txtNome.Text;
+        SelectedPrograma.Caminho = txtCaminho.Text;
+        SelectedPrograma.Argumentos = txtArgumentos.Text;
+        SelectedPrograma.x86 = (bool)chk32bits.IsChecked ? "S" : "N";
+        SelectedPrograma.x64 = (bool)chk64bits.IsChecked ? "S" : "N";
     }
-
-    private void btnNovo_Click(object sender, RoutedEventArgs e)
-    {
-        LimparTela();
-        AtivarEdicao();
-        this.Title += " - Inserindo Novo";
-    }
-
-    private void btnAlterar_Click(object sender, RoutedEventArgs e)
-    {
-        if (txtId.Text != "") {
-            AtivarEdicao();
-            this.Title += " - Alterando";
-        }
-        else {
-            System.Windows.MessageBox.Show("Selecione um registro clicando duas vezes nele!");
-        }
-
-    }
-
-    private void btnExcluir_Click(object sender, RoutedEventArgs e)
-    {
-
-        if (txtId.Text != "") {
-            XmlHandler.ExcluirDados(txtId.Text);
-            LimparTela();
-            XmlHandler.GetDados(dtProgramas, selectFirstIndex: true);
-        }
-        else {
-            System.Windows.MessageBox.Show("Selecione um registro clicando duas vezes nele!");
-        }
-
-    }
-
-    protected override void OnClosed(EventArgs e)
-    {
-        MainWindow mainWindow = new MainWindow();
-        this.Close();
-        mainWindow.Show();
-    }
+    #endregion
 }
