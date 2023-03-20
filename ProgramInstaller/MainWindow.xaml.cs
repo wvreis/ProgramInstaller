@@ -47,7 +47,7 @@ public partial class MainWindow : Window {
 
     async Task IniciarInstalcao()
     {
-        if (!isArquituraChecked()) {
+        if (!IsArquituraChecked()) {
             MessageBox.Show("Selecione a arquitetura do S.O.");
             return;
         }
@@ -69,7 +69,7 @@ public partial class MainWindow : Window {
     {
         foreach (DataRowView dt in dtProgramas.ItemsSource) {
             try {
-                if (is32bitsCommand(dt) || is64BitsCommand(dt)) {
+                if (Is32bitsCommand(dt) || Is64BitsCommand(dt)) {
                     txtProgresso.AppendText($"Instalando {dt.Row.ItemArray[1]?.ToString() ?? string.Empty}. \n");
 
                     await Task.Run(() =>
@@ -105,13 +105,13 @@ public partial class MainWindow : Window {
     }
 
     #region VALIDATIONS
-    bool isArquituraChecked() =>
+    bool IsArquituraChecked() =>
         chk32bits.IsChecked == true || chk64bits.IsChecked == true;
 
-    bool is32bitsCommand(DataRowView dt) =>
+    bool Is32bitsCommand(DataRowView dt) =>
         dt.Row.ItemArray[4]?.ToString() == "S" && chk32bits.IsChecked == true;
 
-    bool is64BitsCommand(DataRowView dt) =>
+    bool Is64BitsCommand(DataRowView dt) =>
         dt.Row.ItemArray[5]?.ToString() == "S" && chk64bits.IsChecked == true;
     #endregion
 }
