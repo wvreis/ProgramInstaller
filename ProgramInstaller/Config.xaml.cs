@@ -12,7 +12,7 @@ namespace ProgramInstaller;
 /// Interaction logic for Config.xaml
 /// </summary>
 public partial class Config : Window {
-    Programas programas { get; set; } = new();
+    Programas? programas { get; set; } = new();
 
     public Config()
     {

@@ -9,13 +9,13 @@ using System.Xml.Serialization;
 
 namespace ProgramInstaller.Controllers; 
 public class ConfigController  {
-    public Programas Load()
+    public Programas? Load()
     {
         try {
-            XmlSerializer ser = new XmlSerializer(typeof(Programas));
+            XmlSerializer? ser = new XmlSerializer(typeof(Programas));
             FileStream fs = new FileStream(@"config\configN.xml", FileMode.OpenOrCreate);
             
-            var programas = (Programas)ser.Deserialize(fs);
+            var programas = ser.Deserialize(fs) as Programas;
 
             return programas;
         }
