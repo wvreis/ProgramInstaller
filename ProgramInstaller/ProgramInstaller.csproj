@@ -10,20 +10,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Config\config.xml" />
 	<None Remove="Assets\icone.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Config\config.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Assets\icone.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Config\" />
   </ItemGroup>
 
 </Project>

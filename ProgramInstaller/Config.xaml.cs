@@ -102,6 +102,7 @@ public partial class Config : Window {
 
         Programas.ListaProgramas.Remove(SelectedPrograma);
         CleanFields();
+        new ConfigController().Save(Programas);
         dtProgramas.Items.Refresh();
     }
 
