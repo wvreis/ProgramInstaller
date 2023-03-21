@@ -1,7 +1,6 @@
 ﻿using ProgramInstaller.Controllers;
 using ProgramInstaller.Models;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
@@ -75,11 +74,28 @@ public partial class MainWindow : Window {
                 if (is32bitsCommand(programa) || is64BitsCommand(programa)) {
                     txtProgresso.AppendText($"Instalando {programa.Nome ?? string.Empty}. \n");
 
-                    await Task.Run(() =>
-                        Process.Start(
-                            programa.Caminho ?? string.Empty,
-                            programa.Argumentos ?? string.Empty)
-                        .WaitForExit());
+                    await Task.Run(() => {
+                        Process process = new Process();
+
+                        process.StartInfo.FileName = programa.Caminho ?? string.Empty;
+                        process.StartInfo.Arguments = programa.Argumentos ?? string.Empty;
+
+                        process.StartInfo.RedirectStandardOutput = true;
+                        process.StartInfo.RedirectStandardError = true;
+
+                        process.Start();
+                        process.WaitForExit();
+
+                        string output = process.StandardOutput.ReadToEnd();
+                        string errorOutput = process.StandardError.ReadToEnd();
+
+                        int exitCode = process.ExitCode;
+
+                        if (exitCode != 0) {
+
+                        }
+
+                    });
                 }
             }
             catch (Exception ex) {
