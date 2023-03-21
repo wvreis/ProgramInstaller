@@ -11,19 +11,19 @@ public class ConfigController {
     const string path = "config";
     const string fileName = "config.xml";
 
-    public List<Programa>? Load()
+    public Programas? Load()
     {
         FileStream fs = new FileStream(fullPath, FileMode.OpenOrCreate);
-        List<Programa> programas = new();
+        Programas programas = new();
 
         try {
-            XmlSerializer? ser = new XmlSerializer(typeof(List<Programa>));
+            XmlSerializer? ser = new XmlSerializer(typeof(Programas));
 
             CheckDirectoryExistence(path);
             CheckFileExistence(fullPath);
 
             if (fs.Length > 0)
-                programas = ser.Deserialize(fs) as List<Programa>;
+                programas = ser.Deserialize(fs) as Programas;
 
             return programas;
         }
@@ -37,14 +37,19 @@ public class ConfigController {
         }
     }
 
-    public void Save(List<Programa> programas)
+    public void Save(Programas programas)
     {
         if (File.Exists(fullPath))
             File.Delete(fullPath);
 
-        XmlSerializer ser = new XmlSerializer(typeof(List<Programa>));
+        XmlSerializer ser = new XmlSerializer(typeof(Programas));
+        
+        XmlSerializerNamespaces namespaces = new XmlSerializerNamespaces();
+        namespaces.Add(string.Empty, string.Empty);
+        
         FileStream fs = new FileStream(fullPath, FileMode.OpenOrCreate);
-        ser.Serialize(fs, programas);
+        ser.Serialize(fs, programas, namespaces);
+
         fs.Close();
 
         CheckIfListIsEmptyToDeleteFile(programas);
@@ -58,9 +63,9 @@ public class ConfigController {
         Directory.CreateDirectory(directory);
     }
 
-    void CheckIfListIsEmptyToDeleteFile(List<Programa> programas)
+    void CheckIfListIsEmptyToDeleteFile(Programas programas)
     {
-        if (!programas.Any() && File.Exists(fullPath)) {
+        if (!programas.ListaProgramas.Any() && File.Exists(fullPath)) {
             File.Delete(fullPath);
         }
     }

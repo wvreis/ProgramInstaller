@@ -10,7 +10,7 @@ namespace ProgramInstaller;
 /// Interaction logic for Config.xaml
 /// </summary>
 public partial class Config : Window {
-    List<Programa>? Programas { get; set; } = new();
+    Programas? Programas { get; set; } = new();
     Programa? SelectedPrograma { get; set; }
     int SelectedProgramaIndex { get; set; }
 
@@ -19,7 +19,7 @@ public partial class Config : Window {
         InitializeComponent();
 
         Programas = new ConfigController().Load();
-        dtProgramas.ItemsSource = Programas;
+        dtProgramas.ItemsSource = Programas.ListaProgramas;
         dtProgramas.SelectedIndex = 0;
     }
 
@@ -45,7 +45,7 @@ public partial class Config : Window {
             CleanFields();
 
         if (Title.Contains("Configuração - Inserindo Novo"))
-            Programas?.Add(SelectedPrograma);
+            Programas?.ListaProgramas.Add(SelectedPrograma);
 
         DisableEdition();
 
@@ -102,7 +102,7 @@ public partial class Config : Window {
             return;
         }
 
-        Programas.Remove(SelectedPrograma);
+        Programas.ListaProgramas.Remove(SelectedPrograma);
         CleanFields();
         new ConfigController().Save(Programas);
         dtProgramas.Items.Refresh();

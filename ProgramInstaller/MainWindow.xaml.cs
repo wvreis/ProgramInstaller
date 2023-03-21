@@ -11,14 +11,14 @@ namespace ProgramInstaller;
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 public partial class MainWindow : Window {
-    List<Programa>? Programas { get; set; }
+    Programas? Programas { get; set; }
     bool isInstalling = false;
 
     public MainWindow()
     {
         InitializeComponent();
         Programas = new ConfigController().Load();
-        dtProgramas.ItemsSource = Programas;
+        dtProgramas.ItemsSource = Programas.ListaProgramas;
     }
 
     #region EVENTS
