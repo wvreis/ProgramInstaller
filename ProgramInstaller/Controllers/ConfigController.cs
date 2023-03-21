@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Xml.Serialization;
 
 namespace ProgramInstaller.Controllers; 
@@ -29,25 +30,26 @@ public class ConfigController  {
             return programas;
         }
         catch (InvalidOperationException ex) {
-            throw ex;
+            MessageBox.Show(ex.Message);
+            return programas;
         }
         finally {
-            if (!programas.Any()) {
-                fs.Close();
-                File.Delete(fullPath);
-            }
-            else {
-                fs.Close();
-            }
+            fs.Close();
+            CheckIfListIsEmptyToDeleteFile(programas);
         }
     }
 
     public void Save(List<Programa> programas)
     {
+        if (File.Exists(fullPath)) 
+            File.Delete(fullPath);
+
         XmlSerializer ser = new XmlSerializer(typeof(List<Programa>));
         FileStream fs = new FileStream(fullPath, FileMode.OpenOrCreate);
         ser.Serialize(fs, programas);
         fs.Close();
+
+        CheckIfListIsEmptyToDeleteFile(programas);
     }
 
     void CheckDirectoryExistence(string directory)
@@ -56,6 +58,13 @@ public class ConfigController  {
             return;
 
         Directory.CreateDirectory(directory);
+    }
+
+    void CheckIfListIsEmptyToDeleteFile(List<Programa> programas)
+    {
+        if (!programas.Any() && File.Exists(fullPath)) {
+            File.Delete(fullPath);
+        }
     }
 
     void CheckFileExistence(string file)

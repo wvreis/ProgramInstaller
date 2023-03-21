@@ -65,6 +65,7 @@ public partial class Config : Window {
     {
         CleanFields();
         DisableEdition();
+        LoadFileds();
         Title = "Configuração";
         dtProgramas.Items.Refresh();
     }
@@ -91,7 +92,7 @@ public partial class Config : Window {
 
     private void btnExcluir_Click(object sender, RoutedEventArgs e)
     {
-        var dialogResult = MessageBox.Show("Deseja Confirmar a Exclusão do Registro Selecioando?", "Exclusão", MessageBoxButton.YesNo);
+        var dialogResult = MessageBox.Show("Deseja Confirmar a Exclusão do Registro Selecionado?", "Exclusão", MessageBoxButton.YesNo);
 
         if (dialogResult == MessageBoxResult.No)
             return;
