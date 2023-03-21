@@ -13,13 +13,14 @@ public class ConfigController {
 
     public Programas? Load()
     {
+        CheckDirectoryExistence(path);
+
         FileStream fs = new FileStream(fullPath, FileMode.OpenOrCreate);
         Programas programas = new();
 
         try {
             XmlSerializer? ser = new XmlSerializer(typeof(Programas));
 
-            CheckDirectoryExistence(path);
             CheckFileExistence(fullPath);
 
             if (fs.Length > 0)
