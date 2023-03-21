@@ -1,6 +1,7 @@
 ﻿using ProgramInstaller.Controllers;
 using ProgramInstaller.Models;
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -9,7 +10,7 @@ namespace ProgramInstaller;
 /// Interaction logic for Config.xaml
 /// </summary>
 public partial class Config : Window {
-    Programas? Programas { get; set; } = new();
+    List<Programa>? Programas { get; set; } = new();
     Programa? SelectedPrograma { get; set; }
     int SelectedProgramaIndex { get; set; }
 
@@ -18,7 +19,7 @@ public partial class Config : Window {
         InitializeComponent();
 
         Programas = new ConfigController().Load();
-        dtProgramas.ItemsSource = Programas?.ListaProgramas;
+        dtProgramas.ItemsSource = Programas;
         dtProgramas.SelectedIndex = 0;
     }
 
@@ -44,7 +45,7 @@ public partial class Config : Window {
             CleanFields();
 
         if (Title.Contains("Configuração - Inserindo Novo"))
-            Programas?.ListaProgramas.Add(SelectedPrograma);
+            Programas?.Add(SelectedPrograma);
 
         DisableEdition();
 
@@ -100,7 +101,7 @@ public partial class Config : Window {
             return;
         }
 
-        Programas.ListaProgramas.Remove(SelectedPrograma);
+        Programas.Remove(SelectedPrograma);
         CleanFields();
         new ConfigController().Save(Programas);
         dtProgramas.Items.Refresh();

@@ -12,28 +12,39 @@ public class ConfigController  {
     const string path = "config";
     const string fileName = "config.xml";
 
-    public Programas? Load()
+    public List<Programa>? Load()
     {
+        FileStream fs = new FileStream(fullPath, FileMode.OpenOrCreate);
+        List<Programa> programas = new();
+
         try {
-            XmlSerializer? ser = new XmlSerializer(typeof(Programas));
+            XmlSerializer? ser = new XmlSerializer(typeof(List<Programa>));
             
             CheckDirectoryExistence(path);
             CheckFileExistence(fullPath);
 
-            FileStream fs = new FileStream(fullPath, FileMode.OpenOrCreate);
-            
-            var programas = ser.Deserialize(fs) as Programas;
+            if (fs.Length > 0)
+                programas = ser.Deserialize(fs) as List<Programa>;
 
             return programas;
         }
         catch (InvalidOperationException ex) {
             throw ex;
         }
+        finally {
+            if (!programas.Any()) {
+                fs.Close();
+                File.Delete(fullPath);
+            }
+            else {
+                fs.Close();
+            }
+        }
     }
 
-    public void Save(Programas programas)
+    public void Save(List<Programa> programas)
     {
-        XmlSerializer ser = new XmlSerializer(typeof(Programas));
+        XmlSerializer ser = new XmlSerializer(typeof(List<Programa>));
         FileStream fs = new FileStream(fullPath, FileMode.OpenOrCreate);
         ser.Serialize(fs, programas);
         fs.Close();

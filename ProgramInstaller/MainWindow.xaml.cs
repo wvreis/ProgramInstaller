@@ -1,6 +1,7 @@
 ﻿using ProgramInstaller.Controllers;
 using ProgramInstaller.Models;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,14 +11,14 @@ namespace ProgramInstaller;
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 public partial class MainWindow : Window {
-    Programas? Programas { get; set; }
+    List<Programa>? Programas { get; set; }
     bool isInstalling = false;
 
     public MainWindow()
     {
         InitializeComponent();
         Programas = new ConfigController().Load();
-        dtProgramas.ItemsSource = Programas?.ListaProgramas;
+        dtProgramas.ItemsSource = Programas;
     }
 
     #region EVENTS
