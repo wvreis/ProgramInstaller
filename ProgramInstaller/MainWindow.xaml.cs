@@ -75,7 +75,7 @@ public partial class MainWindow : Window {
                     txtProgresso.AppendText($"Instalando {programa.Nome ?? string.Empty}. \n");
 
                     await Task.Run(() => {
-                        Process process = new Process();
+                        Process process = new();
 
                         process.StartInfo.FileName = programa.Caminho ?? string.Empty;
                         process.StartInfo.Arguments = programa.Argumentos ?? string.Empty;
