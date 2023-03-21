@@ -3,13 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Serialization;
 
-namespace ProgramInstaller.Controllers; 
-public class ConfigController  {
+namespace ProgramInstaller.Controllers;
+public class ConfigController {
     const string path = "config";
     const string fileName = "config.xml";
 
@@ -20,7 +18,7 @@ public class ConfigController  {
 
         try {
             XmlSerializer? ser = new XmlSerializer(typeof(List<Programa>));
-            
+
             CheckDirectoryExistence(path);
             CheckFileExistence(fullPath);
 
@@ -41,7 +39,7 @@ public class ConfigController  {
 
     public void Save(List<Programa> programas)
     {
-        if (File.Exists(fullPath)) 
+        if (File.Exists(fullPath))
             File.Delete(fullPath);
 
         XmlSerializer ser = new XmlSerializer(typeof(List<Programa>));
@@ -69,7 +67,7 @@ public class ConfigController  {
 
     void CheckFileExistence(string file)
     {
-        if (!File.Exists(file)) 
+        if (!File.Exists(file))
             Save(new());
     }
 
