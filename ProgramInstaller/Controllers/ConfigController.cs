@@ -29,7 +29,7 @@ public class ConfigController {
             return programas;
         }
         catch (InvalidOperationException ex) {
-            MessageBox.Show(ex.Message);
+            MessageBox.Show($"{ex.Message} \nHouve um erro de leitura das configurações, o arquivo XML será recriado.");
             return programas;
         }
         finally {

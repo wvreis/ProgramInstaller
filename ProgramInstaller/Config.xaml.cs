@@ -34,11 +34,6 @@ public partial class Config : Window {
 
     private void btnOk_Click(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrEmpty(txtId.Text)) {
-            MessageBox.Show("Preencha o Campo Id!!!");
-            return;
-        }
-
         SaveFileds();
 
         if (dtProgramas.SelectedIndex != SelectedProgramaIndex)
@@ -81,8 +76,8 @@ public partial class Config : Window {
 
     private void btnAlterar_Click(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrEmpty(txtId.Text)) {
-            MessageBox.Show("Selecione um registro clicando duas vezes nele!");
+        if (string.IsNullOrEmpty(SelectedPrograma.Id.ToString())) {
+            MessageBox.Show("Selecione um registro clicando nele!");
             return;
         }
 
@@ -97,8 +92,8 @@ public partial class Config : Window {
         if (dialogResult == MessageBoxResult.No)
             return;
 
-        if (string.IsNullOrEmpty(txtId.Text)) {
-            MessageBox.Show("Selecione um registro clicando duas vezes nele!");
+        if (string.IsNullOrEmpty(SelectedPrograma.Id.ToString())) {
+            MessageBox.Show("Selecione um registro clicando nele!");
             return;
         }
 
@@ -143,7 +138,6 @@ public partial class Config : Window {
 
     private void CleanFields()
     {
-        txtId.Text = "";
         txtNome.Text = "";
         txtCaminho.Text = "";
         txtArgumentos.Text = "";
@@ -156,7 +150,6 @@ public partial class Config : Window {
         if (SelectedPrograma is null)
             return;
 
-        txtId.Text = SelectedPrograma.Id.ToString();
         txtNome.Text = SelectedPrograma.Nome.ToString();
         txtCaminho.Text = SelectedPrograma.Caminho.ToString();
         txtArgumentos.Text = SelectedPrograma.Argumentos.ToString();
@@ -166,7 +159,6 @@ public partial class Config : Window {
 
     void SaveFileds()
     {
-        SelectedPrograma.Id = Convert.ToInt32(txtId.Text);
         SelectedPrograma.Nome = txtNome.Text;
         SelectedPrograma.Caminho = txtCaminho.Text;
         SelectedPrograma.Argumentos = txtArgumentos.Text;
