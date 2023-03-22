@@ -94,7 +94,7 @@ public partial class MainWindow : Window {
                         int exitCode = process.ExitCode;
 
                         if (exitCode != 0)
-                            output = $"{standardOutput} \n{errorOutput}";
+                            output = $"{standardOutput} \n{errorOutput} \n";
                     });
 
                     txtProgresso.AppendText(output);
