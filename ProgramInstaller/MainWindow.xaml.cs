@@ -1,9 +1,12 @@
 ﻿using ProgramInstaller.Controllers;
 using ProgramInstaller.Models;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Documents;
 
 namespace ProgramInstaller;
 /// <summary>
@@ -47,6 +50,7 @@ public partial class MainWindow : Window {
 
     #endregion
 
+    #region AUXILIARY METHODS
     async Task StartProgram()
     {
         if (!IsArquituraChecked()) {
@@ -57,6 +61,9 @@ public partial class MainWindow : Window {
         isInstalling = true;
 
         ChangeFieldsVisibility();
+
+        if (await IsWingetInstallNeeded())
+            await WingetInstall();
 
         await ExecuteCommands();
 
@@ -74,7 +81,7 @@ public partial class MainWindow : Window {
                 if (is32bitsCommand(programa) || is64BitsCommand(programa)) {
                     string output = string.Empty;
 
-                    txtProgresso.AppendText($"Instalando {programa.Nome ?? string.Empty}. \n");
+                    txtProgresso.AppendText($"Instalando {programa.Nome ?? string.Empty}... \n");
 
                     await Task.Run(() => {
                         Process process = new();
@@ -104,7 +111,7 @@ public partial class MainWindow : Window {
                 txtProgresso.AppendText($"{ex.Message} \n");
             }
         }
-    }
+    }    
 
     void ChangeFieldsVisibility()
     {
@@ -124,6 +131,107 @@ public partial class MainWindow : Window {
             txtProgresso.Text = string.Empty;
         }
     }
+
+    async Task<bool> IsWingetInstallNeeded()
+    {
+        try {
+            bool hasWingetCommand = false;
+            bool hasWingetInstalled = false;
+            
+            var listProgramas = dtProgramas.Items.SourceCollection as List<Programa>;
+
+            hasWingetCommand = listProgramas.Where(x => x.Caminho.ToLower().Contains("winget")).Any();
+
+            await Task.Run(() => {
+                using (Process process = new()) {
+                    process.StartInfo.FileName = "winget";
+                    process.StartInfo.Arguments = "";
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
+
+                    process.Start();
+                    process.WaitForExit();
+
+                    string standardOutput = process.StandardOutput.ReadToEnd();
+                    string errorOutput = process.StandardError.ReadToEnd();
+
+                    if(standardOutput.ToLower().Contains("uso: winget"))
+                        hasWingetInstalled = true;
+                }
+            });
+
+            return hasWingetCommand && !hasWingetInstalled;
+        }
+        catch (Exception ex) {
+            return true;
+        }
+    }
+
+    async Task WingetInstall()
+    {
+        try {
+            txtProgresso.AppendText($"Instalando Winget...\n");
+
+            string output = string.Empty;
+
+            output = await ExecuteCommand("powershell", "$ProgressPreference='Silent'");
+            txtProgresso.AppendText(output);
+            output = string.Empty;            
+
+            output = await ExecuteCommand("powershell", "Invoke-WebRequest -Uri \"https://github.com/microsoft/winget-cli/releases/download/v1.1.12653/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle\" -OutFile .\\WinGet.msixbundle\"");
+            txtProgresso.AppendText(output);
+            output = string.Empty;            
+
+            output = await ExecuteCommand("powershell", "Invoke-WebRequest -Uri https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx -OutFile Microsoft.VCLibs.x64.14.00.Desktop.appx");
+            txtProgresso.AppendText(output);
+            output = string.Empty;           
+
+            output = await ExecuteCommand("powershell", "Add-AppxPackage Microsoft.VCLibs.x64.14.00.Desktop.appx");
+            txtProgresso.AppendText(output);
+            output = string.Empty;
+
+            output = await ExecuteCommand("powershell", "Add-AppxPackage .\\WinGet.msixbundle");
+            txtProgresso.AppendText(output);
+            output = string.Empty;
+        }
+        catch (Exception ex) {
+            txtProgresso.AppendText($"{ex.Message}\n");
+        }
+    }
+
+    async Task<string> ExecuteCommand(string fileName, string arguments)
+    {
+        try {
+            string output = string.Empty;
+
+            await Task.Run(() => {
+                using (Process process = new()) {
+                    process.StartInfo.FileName = fileName;
+                    process.StartInfo.Arguments = arguments;
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
+
+                    process.Start();
+                    process.WaitForExit();
+
+                    string standardOutput = process.StandardOutput.ReadToEnd();
+                    string errorOutput = process.StandardError.ReadToEnd();
+
+                    int exitCode = process.ExitCode;
+
+                    if (exitCode != 0)
+                        output = $"{standardOutput} \n{errorOutput} \n";
+                }
+            });
+
+            return output;
+        }
+        catch (Exception ex) {
+            return $"{ex.Message}\n";
+        }
+
+    }
+    #endregion
 
     #region VALIDATIONS
     bool IsArquituraChecked() =>
