@@ -72,6 +72,8 @@ public partial class MainWindow : Window {
         foreach (Programa programa in dtProgramas.Items) {
             try {
                 if (is32bitsCommand(programa) || is64BitsCommand(programa)) {
+                    string output = string.Empty;
+
                     txtProgresso.AppendText($"Instalando {programa.Nome ?? string.Empty}. \n");
 
                     await Task.Run(() => {
@@ -86,20 +88,20 @@ public partial class MainWindow : Window {
                         process.Start();
                         process.WaitForExit();
 
-                        string output = process.StandardOutput.ReadToEnd();
+                        string standardOutput = process.StandardOutput.ReadToEnd();
                         string errorOutput = process.StandardError.ReadToEnd();
 
                         int exitCode = process.ExitCode;
 
-                        if (exitCode != 0) {
-
-                        }
-
+                        if (exitCode != 0)
+                            output = $"{standardOutput} \n{errorOutput}";
                     });
+
+                    txtProgresso.AppendText(output);
                 }
             }
             catch (Exception ex) {
-                MessageBox.Show(ex.Message);
+                txtProgresso.AppendText($"{ex.Message} \n");
             }
         }
     }
