@@ -89,19 +89,17 @@ public partial class MainWindow : Window {
                         process.StartInfo.FileName = programa.Caminho ?? string.Empty;
                         process.StartInfo.Arguments = programa.Argumentos ?? string.Empty;
 
-                        process.StartInfo.RedirectStandardOutput = true;
                         process.StartInfo.RedirectStandardError = true;
 
                         process.Start();
                         process.WaitForExit();
 
-                        string standardOutput = process.StandardOutput.ReadToEnd();
                         string errorOutput = process.StandardError.ReadToEnd();
 
                         int exitCode = process.ExitCode;
 
                         if (exitCode != 0)
-                            output = $"{standardOutput} \n{errorOutput} \n";
+                            output = $"{errorOutput} \n";
                     });
 
                     txtProgresso.AppendText(output);
