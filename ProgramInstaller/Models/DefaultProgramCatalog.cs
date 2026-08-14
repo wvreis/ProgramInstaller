@@ -34,10 +34,11 @@ public static class DefaultProgramCatalog
                     Id = Guid.Parse("af89cbcc-9465-4ec6-92a1-5a23c1f2510c"),
                     Nome = "Microsoft Office 365",
                     Caminho = "winget",
-                    Argumentos = "install --id Microsoft.Office --accept-package-agreements --accept-source-agreements --scope machine --silent --force --ignore-security-hash",
+                    Argumentos = "install --id Microsoft.Office --accept-package-agreements --accept-source-agreements --scope machine --silent --force",
                     x86 = "S",
                     x64 = "S",
-                    Ativo = true
+                    Ativo = true,
+                    PermitirHashDiferente = true
                 },
                 new Programa
                 {

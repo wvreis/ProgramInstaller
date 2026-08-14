@@ -105,6 +105,21 @@
                                                 </TextBlock.Style>
                                             </TextBlock>
                                         </Border>
+                                        <Border CornerRadius="8" Padding="7,1" Margin="6,0,0,0"
+                                                Background="#FFEDD5">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding PermitirHashDiferente}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="Hash liberado" FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="#9A3412"/>
+                                        </Border>
                                         </StackPanel>
                                         <TextBlock Margin="0,3,0,0" FontSize="11"
                                                    Foreground="{StaticResource MutedTextBrush}">

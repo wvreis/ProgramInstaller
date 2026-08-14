@@ -46,6 +46,7 @@
                     </StackPanel>
                 </Grid>
                 <TextBox x:Name="txtCaminho" Height="40" Padding="10,5" Margin="0,0,0,3"
+                         TextChanged="txtCaminho_TextChanged"
                          ToolTip="Ex.: winget ou C:\Instaladores\setup.exe"/>
                 <TextBlock Text="Exemplo: winget ou C:\Instaladores\setup.exe"
                            Foreground="{StaticResource MutedTextBrush}" FontSize="10" Margin="0,0,0,12"/>
@@ -78,17 +79,21 @@
 
                 <Border Background="White" BorderBrush="{StaticResource BorderBrush}"
                         BorderThickness="1" CornerRadius="10" Padding="12">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <CheckBox x:Name="chkAtivo" Content="Incluir na instalação em lote"
-                                  Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="1" Text="Pode ser executado individualmente mesmo quando desativado."
-                                   Margin="14,0,0,0" VerticalAlignment="Center"
-                                   Foreground="{StaticResource MutedTextBrush}" FontSize="10" TextWrapping="Wrap"/>
-                    </Grid>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox x:Name="chkAtivo" Content="Incluir no lote"
+                                      Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
+                            <CheckBox x:Name="chkPermitirHashDiferente" Grid.Column="1"
+                                      Content="Permitir hash diferente"
+                                      Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
+                        </Grid>
+                        <TextBlock Text="Hash: somente WinGet; a liberação é desativada ao terminar."
+                                   Margin="0,8,0,0" Foreground="#9A3412" FontSize="10"/>
+                    </StackPanel>
                 </Border>
             </StackPanel>
         </ScrollViewer>

@@ -1,4 +1,6 @@
+using ProgramInstaller.Controllers;
 using ProgramInstaller.Models;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -32,10 +34,14 @@ public partial class ProgramaEditor : Window
 
         Result.Nome = txtNome.Text.Trim();
         Result.Caminho = txtCaminho.Text.Trim();
-        Result.Argumentos = txtArgumentos.Text.Trim();
+        bool argumentsRequestedHashOverride =
+            WingetSecurityOptions.ContainsIgnoreSecurityHash(txtArgumentos.Text);
+        Result.Argumentos = WingetSecurityOptions.RemoveIgnoreSecurityHash(txtArgumentos.Text);
         Result.x86 = chk32bits.IsChecked == true ? "S" : "N";
         Result.x64 = chk64bits.IsChecked == true ? "S" : "N";
         Result.Ativo = chkAtivo.IsChecked == true;
+        Result.PermitirHashDiferente = IsWingetCommand(txtCaminho.Text) &&
+            (chkPermitirHashDiferente.IsChecked == true || argumentsRequestedHashOverride);
 
         DialogResult = true;
     }
@@ -53,6 +59,8 @@ public partial class ProgramaEditor : Window
         chk32bits.IsChecked = true;
         chk64bits.IsChecked = true;
         chkAtivo.IsChecked = true;
+        chkPermitirHashDiferente.IsChecked =
+            package.Id.Equals("Microsoft.Office", StringComparison.OrdinalIgnoreCase);
     }
 
     private void LoadFields()
@@ -63,6 +71,19 @@ public partial class ProgramaEditor : Window
         chk32bits.IsChecked = Result.x86 == "S";
         chk64bits.IsChecked = Result.x64 == "S";
         chkAtivo.IsChecked = Result.Ativo;
+        chkPermitirHashDiferente.IsChecked = Result.PermitirHashDiferente;
+        UpdateHashOverrideAvailability();
+    }
+
+    private void txtCaminho_TextChanged(object sender, TextChangedEventArgs e) =>
+        UpdateHashOverrideAvailability();
+
+    private void UpdateHashOverrideAvailability()
+    {
+        if (chkPermitirHashDiferente is null || txtCaminho is null)
+            return;
+
+        chkPermitirHashDiferente.IsEnabled = IsWingetCommand(txtCaminho.Text);
     }
 
     private bool ValidateFields()
@@ -110,8 +131,13 @@ public partial class ProgramaEditor : Window
             x86 = source.x86,
             x64 = source.x64,
             Ativo = source.Ativo,
+            PermitirHashDiferente = source.PermitirHashDiferente,
             StatusExecucao = source.StatusExecucao
         };
+
+    private static bool IsWingetCommand(string command) =>
+        command.Trim().Equals("winget", StringComparison.OrdinalIgnoreCase) ||
+        command.Trim().Equals("winget.exe", StringComparison.OrdinalIgnoreCase);
 
     private static void ShowValidationMessage(string message, Control control)
     {

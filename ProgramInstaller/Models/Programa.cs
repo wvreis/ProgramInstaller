@@ -14,6 +14,7 @@ public sealed class Programa : INotifyPropertyChanged
     private string _x86 = "N";
     private string _x64 = "N";
     private bool _ativo = true;
+    private bool _permitirHashDiferente;
     private string _statusExecucao = "Não executado";
 
     public string Nome
@@ -58,6 +59,12 @@ public sealed class Programa : INotifyPropertyChanged
     {
         get => _ativo;
         set => SetField(ref _ativo, value);
+    }
+
+    public bool PermitirHashDiferente
+    {
+        get => _permitirHashDiferente;
+        set => SetField(ref _permitirHashDiferente, value);
     }
 
     public Guid Id { get; set; } = Guid.NewGuid();

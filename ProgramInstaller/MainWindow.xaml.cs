@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private readonly ConfigController _configController = new();
     private Programas _programas = new();
     private bool _isInstalling;
+    private bool _hashOverrideCleanupFailed;
 
     public MainWindow()
     {
@@ -99,6 +100,7 @@ public partial class MainWindow : Window
             return;
 
         _isInstalling = true;
+        _hashOverrideCleanupFailed = false;
         SetBusyState(true);
         txtProgresso.Clear();
         txtStatusGeral.Text = operationName;
@@ -109,19 +111,34 @@ public partial class MainWindow : Window
         int successful = 0;
         int failed = 0;
 
+        List<Programa> executionQueue = programas.ToList();
+
         try
         {
-            foreach (Programa programa in programas)
+            for (int index = 0; index < executionQueue.Count; index++)
             {
+                Programa programa = executionQueue[index];
+
                 if (await ExecuteProgramAsync(programa))
                     successful++;
                 else
                     failed++;
+
+                if (!_hashOverrideCleanupFailed)
+                    continue;
+
+                foreach (Programa pending in executionQueue.Skip(index + 1))
+                    pending.StatusExecucao = "Cancelado por segurança";
+
+                failed += executionQueue.Count - index - 1;
+                break;
             }
 
-            txtStatusGeral.Text = failed == 0
-                ? $"Concluído: {successful} programa(s) executado(s)"
-                : $"Concluído com alertas: {successful} sucesso(s), {failed} falha(s)";
+            txtStatusGeral.Text = _hashOverrideCleanupFailed
+                ? "Interrompido: não foi possível restaurar a proteção de hash"
+                : failed == 0
+                    ? $"Concluído: {successful} programa(s) executado(s)"
+                    : $"Concluído com alertas: {successful} sucesso(s), {failed} falha(s)";
         }
         finally
         {
@@ -132,43 +149,126 @@ public partial class MainWindow : Window
 
     private async Task<bool> ExecuteProgramAsync(Programa programa)
     {
-        programa.StatusExecucao = "Executando";
         AppendLog($"Iniciando {programa.Nome}...");
+        bool requiresHashOverride =
+            programa.PermitirHashDiferente && IsWingetCommand(programa.Caminho);
+        bool hashOverrideEnabled = false;
+        bool executionSuccessful = false;
 
         try
         {
-            ProcessResult result = await RunProcessAsync(programa.Caminho, programa.Argumentos);
+            if (requiresHashOverride)
+            {
+                programa.StatusExecucao = "Liberando hash";
+                AppendLog($"{programa.Nome}: habilitando temporariamente a exceção de hash do WinGet.");
+
+                if (!await SetInstallerHashOverrideAsync(enabled: true))
+                {
+                    programa.StatusExecucao = "Falhou ao liberar hash";
+                    AppendLog($"{programa.Nome} não foi executado porque a exceção de hash não pôde ser habilitada.");
+                    return false;
+                }
+
+                hashOverrideEnabled = true;
+            }
+
+            programa.StatusExecucao = "Executando";
+            string arguments = WingetSecurityOptions.RemoveIgnoreSecurityHash(programa.Argumentos);
+
+            if (requiresHashOverride)
+                arguments = WingetSecurityOptions.AddIgnoreSecurityHash(arguments);
+
+            ProcessResult result = await RunProcessAsync(programa.Caminho, arguments);
 
             if (!string.IsNullOrWhiteSpace(result.StandardOutput))
                 AppendLog(result.StandardOutput.Trim());
 
             if (result.ExitCode == 0)
             {
-                programa.StatusExecucao = "Concluído";
+                executionSuccessful = true;
+                programa.StatusExecucao = hashOverrideEnabled ? "Restaurando segurança" : "Concluído";
                 AppendLog($"{programa.Nome} concluído com sucesso.");
-                return true;
             }
-
-            programa.StatusExecucao = $"Falhou ({result.ExitCode})";
-            string error = string.IsNullOrWhiteSpace(result.StandardError)
-                ? "O processo não informou detalhes."
-                : result.StandardError.Trim();
-            AppendLog($"Falha em {programa.Nome}: {error}");
-            return false;
+            else
+            {
+                programa.StatusExecucao = $"Falhou ({result.ExitCode})";
+                AppendLog($"Falha em {programa.Nome}: {GetProcessError(result)}");
+            }
         }
         catch (Win32Exception) when (IsWingetCommand(programa.Caminho))
         {
             programa.StatusExecucao = "WinGet indisponível";
             AppendLog("WinGet não foi encontrado. Instale ou registre o App Installer do Windows e tente novamente.");
-            return false;
         }
         catch (Exception ex)
         {
             programa.StatusExecucao = "Falhou";
             AppendLog($"Falha em {programa.Nome}: {ex.Message}");
+        }
+        finally
+        {
+            if (hashOverrideEnabled)
+            {
+                bool protectionRestored = await SetInstallerHashOverrideAsync(enabled: false);
+
+                if (!protectionRestored)
+                    protectionRestored = await SetInstallerHashOverrideAsync(enabled: false);
+
+                if (protectionRestored)
+                {
+                    AppendLog("Proteção de hash do WinGet restaurada.");
+
+                    if (executionSuccessful)
+                        programa.StatusExecucao = "Concluído";
+                }
+                else
+                {
+                    executionSuccessful = false;
+                    _hashOverrideCleanupFailed = true;
+                    programa.StatusExecucao = "Proteção de hash pendente";
+                    AppendLog("ATENÇÃO: não foi possível desabilitar InstallerHashOverride. O lote foi interrompido.");
+                    MessageBox.Show(
+                        "Não foi possível restaurar a proteção de hash do WinGet.\n\n" +
+                        "Execute como administrador:\nwinget settings --disable InstallerHashOverride",
+                        "Atenção de segurança",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+            }
+        }
+
+        return executionSuccessful;
+    }
+
+    private async Task<bool> SetInstallerHashOverrideAsync(bool enabled)
+    {
+        string action = enabled ? "enable" : "disable";
+
+        try
+        {
+            ProcessResult result = await RunProcessAsync(
+                "winget",
+                $"settings --{action} InstallerHashOverride");
+
+            if (result.ExitCode == 0)
+                return true;
+
+            AppendLog($"WinGet não conseguiu {(enabled ? "habilitar" : "desabilitar")} a exceção de hash: {GetProcessError(result)}");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"Falha ao {(enabled ? "habilitar" : "desabilitar")} a exceção de hash: {ex.Message}");
             return false;
         }
     }
+
+    private static string GetProcessError(ProcessResult result) =>
+        !string.IsNullOrWhiteSpace(result.StandardError)
+            ? result.StandardError.Trim()
+            : !string.IsNullOrWhiteSpace(result.StandardOutput)
+                ? result.StandardOutput.Trim()
+                : "O processo não informou detalhes.";
 
     private static async Task<ProcessResult> RunProcessAsync(string fileName, string arguments)
     {
@@ -205,7 +305,8 @@ public partial class MainWindow : Window
         (opt64bits.IsChecked == true && programa.x64 == "S");
 
     private static bool IsWingetCommand(string command) =>
-        command.Contains("winget", StringComparison.OrdinalIgnoreCase);
+        command.Trim().Equals("winget", StringComparison.OrdinalIgnoreCase) ||
+        command.Trim().Equals("winget.exe", StringComparison.OrdinalIgnoreCase);
 
     private void SetBusyState(bool isBusy)
     {

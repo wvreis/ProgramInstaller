@@ -28,17 +28,25 @@ public sealed class ConfigController
 
         try
         {
-            using FileStream stream = File.OpenRead(FullPath);
+            Programas programas;
 
-            if (stream.Length == 0)
+            using (FileStream stream = File.OpenRead(FullPath))
             {
-                Programas defaults = DefaultProgramCatalog.Create();
-                stream.Close();
-                Save(defaults);
-                return defaults;
+                if (stream.Length == 0)
+                {
+                    Programas defaults = DefaultProgramCatalog.Create();
+                    stream.Close();
+                    Save(defaults);
+                    return defaults;
+                }
+
+                programas = Serializer.Deserialize(stream) as Programas ?? new Programas();
             }
 
-            return Serializer.Deserialize(stream) as Programas ?? new Programas();
+            if (MigrateHashOverride(programas))
+                Save(programas);
+
+            return programas;
         }
         catch (InvalidOperationException ex)
         {
@@ -55,6 +63,7 @@ public sealed class ConfigController
     public void Save(Programas programas)
     {
         Directory.CreateDirectory(ConfigDirectory);
+        MigrateHashOverride(programas);
 
         string temporaryPath = $"{FullPath}.tmp";
         XmlSerializerNamespaces namespaces = new();
@@ -65,4 +74,26 @@ public sealed class ConfigController
 
         File.Move(temporaryPath, FullPath, true);
     }
+
+    private static bool MigrateHashOverride(Programas programas)
+    {
+        bool changed = false;
+
+        foreach (Programa programa in programas.ListaProgramas)
+        {
+            if (!IsWingetCommand(programa.Caminho) ||
+                !WingetSecurityOptions.ContainsIgnoreSecurityHash(programa.Argumentos))
+                continue;
+
+            programa.PermitirHashDiferente = true;
+            programa.Argumentos = WingetSecurityOptions.RemoveIgnoreSecurityHash(programa.Argumentos);
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private static bool IsWingetCommand(string command) =>
+        command.Trim().Equals("winget", StringComparison.OrdinalIgnoreCase) ||
+        command.Trim().Equals("winget.exe", StringComparison.OrdinalIgnoreCase);
 }
