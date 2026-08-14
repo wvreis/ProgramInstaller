@@ -1,15 +1,11 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace ProgramInstaller.Models;
 
 [XmlRoot("Programas")]
-public class Programas {
+public sealed class Programas
+{
     [XmlElement("Programa")]
-    public List<Programa> ListaProgramas { get; set; }
-
-    public Programas()
-    {
-        ListaProgramas = new();
-    }
+    public List<Programa> ListaProgramas { get; set; } = [];
 }

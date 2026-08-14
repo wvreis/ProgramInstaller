@@ -1,83 +1,68 @@
-﻿using ProgramInstaller.Models;
+using ProgramInstaller.Models;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Xml.Serialization;
 
 namespace ProgramInstaller.Controllers;
-public class ConfigController {
-    const string path = "config";
-    const string fileName = "config.xml";
 
-    public Programas? Load()
+public sealed class ConfigController
+{
+    private const string ConfigDirectory = "config";
+    private const string ConfigFileName = "config.xml";
+    private static readonly XmlSerializer Serializer = new(typeof(Programas));
+
+    private string FullPath => Path.Combine(ConfigDirectory, ConfigFileName);
+
+    public Programas Load()
     {
-        CheckDirectoryExistence(path);
+        Directory.CreateDirectory(ConfigDirectory);
 
-        FileStream fs = new FileStream(fullPath, FileMode.OpenOrCreate);
-        Programas programas = new();
-
-        try {
-            XmlSerializer? ser = new XmlSerializer(typeof(Programas));
-
-            CheckFileExistence(fullPath);
-
-            if (fs.Length > 0)
-                programas = ser.Deserialize(fs) as Programas;
-
-            return programas;
+        if (!File.Exists(FullPath))
+        {
+            Programas defaults = DefaultProgramCatalog.Create();
+            Save(defaults);
+            return defaults;
         }
-        catch (InvalidOperationException ex) {
-            MessageBox.Show($"{ex.Message} \nHouve um erro de leitura das configurações, o arquivo XML será recriado.");
-            return programas;
+
+        try
+        {
+            using FileStream stream = File.OpenRead(FullPath);
+
+            if (stream.Length == 0)
+            {
+                Programas defaults = DefaultProgramCatalog.Create();
+                stream.Close();
+                Save(defaults);
+                return defaults;
+            }
+
+            return Serializer.Deserialize(stream) as Programas ?? new Programas();
         }
-        finally {
-            fs.Close();
-            CheckIfListIsEmptyToDeleteFile(programas);
+        catch (InvalidOperationException ex)
+        {
+            MessageBox.Show(
+                $"{ex.Message}\nNão foi possível ler as configurações. O arquivo atual foi preservado.",
+                "Configuração inválida",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+
+            return new Programas();
         }
     }
 
     public void Save(Programas programas)
     {
-        if (File.Exists(fullPath))
-            File.Delete(fullPath);
+        Directory.CreateDirectory(ConfigDirectory);
 
-        XmlSerializer ser = new XmlSerializer(typeof(Programas));
-        
-        XmlSerializerNamespaces namespaces = new XmlSerializerNamespaces();
+        string temporaryPath = $"{FullPath}.tmp";
+        XmlSerializerNamespaces namespaces = new();
         namespaces.Add(string.Empty, string.Empty);
-        
-        FileStream fs = new FileStream(fullPath, FileMode.OpenOrCreate);
-        ser.Serialize(fs, programas, namespaces);
 
-        fs.Close();
+        using (FileStream stream = File.Create(temporaryPath))
+            Serializer.Serialize(stream, programas, namespaces);
 
-        CheckIfListIsEmptyToDeleteFile(programas);
+        File.Move(temporaryPath, FullPath, true);
     }
-
-    void CheckDirectoryExistence(string directory)
-    {
-        if (Directory.Exists(directory))
-            return;
-
-        Directory.CreateDirectory(directory);
-    }
-
-    void CheckIfListIsEmptyToDeleteFile(Programas programas)
-    {
-        if (!programas.ListaProgramas.Any() && File.Exists(fullPath)) {
-            File.Delete(fullPath);
-        }
-    }
-
-    void CheckFileExistence(string file)
-    {
-        if (!File.Exists(file))
-            Save(new());
-    }
-
-    #region VALIDATIONS
-    string fullPath => $@"{path}\{fileName}";
-    #endregion
 }

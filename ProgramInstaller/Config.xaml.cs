@@ -1,169 +1,102 @@
-﻿using ProgramInstaller.Controllers;
+using ProgramInstaller.Controllers;
 using ProgramInstaller.Models;
-using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
 namespace ProgramInstaller;
-/// <summary>
-/// Interaction logic for Config.xaml
-/// </summary>
-public partial class Config : Window {
-    Programas? Programas { get; set; } = new();
-    Programa? SelectedPrograma { get; set; }
-    int SelectedProgramaIndex { get; set; }
+
+public partial class Config : Window
+{
+    private readonly ConfigController _configController = new();
+    private Programas _programas = new();
 
     public Config()
     {
         InitializeComponent();
-
-        Programas = new ConfigController().Load();
-        dtProgramas.ItemsSource = Programas.ListaProgramas;
-        dtProgramas.SelectedIndex = 0;
-    }
-
-    #region EVENTS
-    private void dtProgramas_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        SelectedPrograma = (Programa?)dtProgramas.SelectedItem;
-        SelectedProgramaIndex = dtProgramas.SelectedIndex;
-
-        LoadFileds();
-    }
-
-    private void btnOk_Click(object sender, RoutedEventArgs e)
-    {
-        SaveFileds();
-
-        if (dtProgramas.SelectedIndex != SelectedProgramaIndex)
-            CleanFields();
-
-        if (Title.Contains("Configuração - Inserindo Novo"))
-            Programas?.ListaProgramas.Add(SelectedPrograma);
-
-        DisableEdition();
-
-        dtProgramas.Items.Refresh();
-
-        new ConfigController().Save(Programas);
-
-        dtProgramas.SelectedIndex = SelectedProgramaIndex;
-
-        MessageBox.Show("Dados salvos com sucesso.");
-
-        Title = "Configuração";
-
-    }
-
-    private void btnCancelar_Click(object sender, RoutedEventArgs e)
-    {
-        CleanFields();
-        DisableEdition();
-        LoadFileds();
-        Title = "Configuração";
-        dtProgramas.Items.Refresh();
+        LoadPrograms();
     }
 
     private void btnNovo_Click(object sender, RoutedEventArgs e)
     {
-        SelectedPrograma = new();
+        ProgramaEditor editor = new() { Owner = this };
 
-        CleanFields();
-        EnableEdition();
-        Title += " - Inserindo Novo";
-    }
-
-    private void btnAlterar_Click(object sender, RoutedEventArgs e)
-    {
-        if (string.IsNullOrEmpty(SelectedPrograma.Id.ToString())) {
-            MessageBox.Show("Selecione um registro clicando nele!");
-            return;
-        }
-
-        EnableEdition();
-        Title += " - Alterando";
-    }
-
-    private void btnExcluir_Click(object sender, RoutedEventArgs e)
-    {
-        var dialogResult = MessageBox.Show("Deseja Confirmar a Exclusão do Registro Selecionado?", "Exclusão", MessageBoxButton.YesNo);
-
-        if (dialogResult == MessageBoxResult.No)
+        if (editor.ShowDialog() != true)
             return;
 
-        if (string.IsNullOrEmpty(SelectedPrograma.Id.ToString())) {
-            MessageBox.Show("Selecione um registro clicando nele!");
-            return;
-        }
-
-        Programas.ListaProgramas.Remove(SelectedPrograma);
-        CleanFields();
-        new ConfigController().Save(Programas);
-        dtProgramas.Items.Refresh();
+        _programas.ListaProgramas.Add(editor.Result);
+        SaveAndRefresh(editor.Result);
     }
 
-    protected override void OnClosed(EventArgs e)
+    private void btnEditarLinha_Click(object sender, RoutedEventArgs e)
     {
-        MainWindow mainWindow = new MainWindow();
-        this.Close();
-        mainWindow.Show();
-    }
-    #endregion
-
-    #region AUXILIARY METHODS
-    private void EnableEdition()
-    {
-        gridDados.IsEnabled = true;
-        btnAlterar.IsEnabled = false;
-        btnExcluir.IsEnabled = false;
-        btnNovo.IsEnabled = false;
-        dtProgramas.IsEnabled = false;
-
-        btnOk.IsEnabled = true;
-        btnCancelar.IsEnabled = true;
+        if (sender is Button { DataContext: Programa programa })
+            EditProgram(programa);
     }
 
-    private void DisableEdition()
+    private void EditProgram(Programa programa)
     {
-        gridDados.IsEnabled = false;
-        btnAlterar.IsEnabled = true;
-        btnExcluir.IsEnabled = true;
-        btnNovo.IsEnabled = true;
-        dtProgramas.IsEnabled = true;
+        ProgramaEditor editor = new(programa) { Owner = this };
 
-        btnOk.IsEnabled = false;
-        btnCancelar.IsEnabled = false;
-    }
-
-    private void CleanFields()
-    {
-        txtNome.Text = "";
-        txtCaminho.Text = "";
-        txtArgumentos.Text = "";
-        chk32bits.IsChecked = false;
-        chk64bits.IsChecked = false;
-    }
-
-    void LoadFileds()
-    {
-        if (SelectedPrograma is null)
+        if (editor.ShowDialog() != true)
             return;
 
-        txtNome.Text = SelectedPrograma.Nome.ToString();
-        txtCaminho.Text = SelectedPrograma.Caminho.ToString();
-        txtArgumentos.Text = SelectedPrograma.Argumentos.ToString();
-        chk32bits.IsChecked = SelectedPrograma.x86 == "S" ? true : false;
-        chk64bits.IsChecked = SelectedPrograma.x64 == "S" ? true : false;
+        int index = _programas.ListaProgramas.IndexOf(programa);
+        _programas.ListaProgramas[index] = editor.Result;
+        SaveAndRefresh(editor.Result);
     }
 
-    void SaveFileds()
+    private void btnExcluirLinha_Click(object sender, RoutedEventArgs e)
     {
-        SelectedPrograma.Nome = txtNome.Text;
-        SelectedPrograma.Caminho = txtCaminho.Text;
-        SelectedPrograma.Argumentos = txtArgumentos.Text;
-        SelectedPrograma.x86 = (bool)chk32bits.IsChecked ? "S" : "N";
-        SelectedPrograma.x64 = (bool)chk64bits.IsChecked ? "S" : "N";
+        if (sender is not Button { DataContext: Programa programa })
+            return;
+
+        MessageBoxResult dialogResult = MessageBox.Show(
+            $"Deseja remover {programa.Nome} da sua lista?",
+            "Remover programa",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (dialogResult != MessageBoxResult.Yes)
+            return;
+
+        _programas.ListaProgramas.Remove(programa);
+        _configController.Save(_programas);
+        lstProgramas.Items.Refresh();
+        UpdateViewState();
     }
-    #endregion
+
+    private void btnAlternarStatus_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: Programa programa })
+            return;
+
+        programa.Ativo = !programa.Ativo;
+        _configController.Save(_programas);
+        UpdateViewState();
+    }
+
+    private void LoadPrograms()
+    {
+        _programas = _configController.Load();
+        lstProgramas.ItemsSource = _programas.ListaProgramas;
+        UpdateViewState();
+    }
+
+    private void SaveAndRefresh(Programa selectedPrograma)
+    {
+        _configController.Save(_programas);
+        lstProgramas.Items.Refresh();
+        lstProgramas.ScrollIntoView(selectedPrograma);
+        UpdateViewState();
+    }
+
+    private void UpdateViewState()
+    {
+        int active = _programas.ListaProgramas.Count(programa => programa.Ativo);
+        int total = _programas.ListaProgramas.Count;
+
+        txtResumo.Text = $"{total} item(ns) · {active} ativo(s)";
+        emptyState.Visibility = total == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
 }

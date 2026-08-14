@@ -1,244 +1,239 @@
-﻿using ProgramInstaller.Controllers;
+using ProgramInstaller.Controllers;
 using ProgramInstaller.Models;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Documents;
+using System.Windows.Controls;
 
 namespace ProgramInstaller;
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
-public partial class MainWindow : Window {
-    Programas? Programas { get; set; }
-    bool isInstalling = false;
+
+public partial class MainWindow : Window
+{
+    private readonly ConfigController _configController = new();
+    private Programas _programas = new();
+    private bool _isInstalling;
 
     public MainWindow()
     {
         InitializeComponent();
-        Programas = new ConfigController().Load();
-        dtProgramas.ItemsSource = Programas.ListaProgramas;
+
+        opt64bits.IsChecked = Environment.Is64BitOperatingSystem;
+        opt32bits.IsChecked = !Environment.Is64BitOperatingSystem;
+
+        LoadPrograms();
     }
 
-    #region EVENTS
     private async void btnInstalar_Click(object sender, RoutedEventArgs e)
     {
-        await StartProgram();
+        List<Programa> ativos = _programas.ListaProgramas
+            .Where(programa => programa.Ativo && IsArchitectureCompatible(programa))
+            .ToList();
+
+        if (ativos.Count == 0)
+        {
+            MessageBox.Show(
+                "Não há programas ativos compatíveis com a arquitetura selecionada.",
+                "Nada para executar",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        await ExecuteProgramsAsync(ativos, "Execução dos programas ativos");
+    }
+
+    private async void btnExecutarLinha_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: Programa programa } || _isInstalling)
+            return;
+
+        if (!IsArchitectureCompatible(programa))
+        {
+            MessageBox.Show(
+                $"{programa.Nome} não está configurado para a arquitetura selecionada.",
+                "Arquitetura incompatível",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        if (!programa.Ativo)
+        {
+            MessageBoxResult confirmation = MessageBox.Show(
+                $"{programa.Nome} está inativo e não participa da execução em lote. Deseja executá-lo mesmo assim?",
+                "Executar programa inativo",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (confirmation != MessageBoxResult.Yes)
+                return;
+        }
+
+        await ExecuteProgramsAsync([programa], $"Execução individual: {programa.Nome}");
     }
 
     private void btnConfig_Click(object sender, RoutedEventArgs e)
     {
-        Config Config = new();
-        Hide();
-        Config.Show();
+        Config configWindow = new() { Owner = this };
+        configWindow.ShowDialog();
+        LoadPrograms();
     }
 
-    private void btnOK_Click(object sender, RoutedEventArgs e) =>
-       ChangeFieldsVisibility();
+    private void btnLimparLog_Click(object sender, RoutedEventArgs e) =>
+        txtProgresso.Clear();
 
-    private void chk32bits_Checked(object sender, RoutedEventArgs e) =>
-        chk64bits.IsChecked = false;
-
-    private void chk64bits_Checked(object sender, RoutedEventArgs e) =>
-        chk32bits.IsChecked = false;
-
-    private void Window_Closed(object sender, EventArgs e) =>
-        Environment.Exit(0);
-
-    #endregion
-
-    #region AUXILIARY METHODS
-    async Task StartProgram()
+    private void LoadPrograms()
     {
-        if (!IsArquituraChecked()) {
-            MessageBox.Show("Selecione a arquitetura do S.O.");
+        _programas = _configController.Load();
+        dtProgramas.ItemsSource = _programas.ListaProgramas;
+        UpdateSummary();
+    }
+
+    private async Task ExecuteProgramsAsync(IReadOnlyCollection<Programa> programas, string operationName)
+    {
+        if (_isInstalling)
             return;
-        }
 
-        isInstalling = true;
+        _isInstalling = true;
+        SetBusyState(true);
+        txtProgresso.Clear();
+        txtStatusGeral.Text = operationName;
 
-        ChangeFieldsVisibility();
+        foreach (Programa programa in programas)
+            programa.StatusExecucao = "Na fila";
 
-        if (await IsWingetInstallNeeded())
-            await WingetInstall();
+        int successful = 0;
+        int failed = 0;
 
-        await ExecuteCommands();
-
-        txtProgresso.AppendText("Concluído!");
-
-        isInstalling = false;
-
-        btnOK.Visibility = Visibility.Visible;
-    }
-
-    async Task ExecuteCommands()
-    {
-        foreach (Programa programa in dtProgramas.Items) {
-            try {
-                if (is32bitsCommand(programa) || is64BitsCommand(programa)) {
-                    string output = string.Empty;
-
-                    txtProgresso.AppendText($"Instalando {programa.Nome ?? string.Empty}... \n");
-
-                    await Task.Run(() => {
-                        Process process = new();
-
-                        process.StartInfo.FileName = programa.Caminho ?? string.Empty;
-                        process.StartInfo.Arguments = programa.Argumentos ?? string.Empty;
-
-                        process.StartInfo.RedirectStandardError = true;
-
-                        process.Start();
-                        process.WaitForExit();
-
-                        string errorOutput = process.StandardError.ReadToEnd();
-
-                        int exitCode = process.ExitCode;
-
-                        if (exitCode != 0)
-                            output = $"{errorOutput} \n";
-                    });
-
-                    txtProgresso.AppendText(output);
-                }
+        try
+        {
+            foreach (Programa programa in programas)
+            {
+                if (await ExecuteProgramAsync(programa))
+                    successful++;
+                else
+                    failed++;
             }
-            catch (Exception ex) {
-                txtProgresso.AppendText($"{ex.Message} \n");
+
+            txtStatusGeral.Text = failed == 0
+                ? $"Concluído: {successful} programa(s) executado(s)"
+                : $"Concluído com alertas: {successful} sucesso(s), {failed} falha(s)";
+        }
+        finally
+        {
+            _isInstalling = false;
+            SetBusyState(false);
+        }
+    }
+
+    private async Task<bool> ExecuteProgramAsync(Programa programa)
+    {
+        programa.StatusExecucao = "Executando";
+        AppendLog($"Iniciando {programa.Nome}...");
+
+        try
+        {
+            ProcessResult result = await RunProcessAsync(programa.Caminho, programa.Argumentos);
+
+            if (!string.IsNullOrWhiteSpace(result.StandardOutput))
+                AppendLog(result.StandardOutput.Trim());
+
+            if (result.ExitCode == 0)
+            {
+                programa.StatusExecucao = "Concluído";
+                AppendLog($"{programa.Nome} concluído com sucesso.");
+                return true;
             }
+
+            programa.StatusExecucao = $"Falhou ({result.ExitCode})";
+            string error = string.IsNullOrWhiteSpace(result.StandardError)
+                ? "O processo não informou detalhes."
+                : result.StandardError.Trim();
+            AppendLog($"Falha em {programa.Nome}: {error}");
+            return false;
         }
-    }    
-
-    void ChangeFieldsVisibility()
-    {
-        if (isInstalling) {
-            dtProgramas.Visibility = Visibility.Hidden;
-            btnConfig.Visibility = Visibility.Hidden;
-            btnInstalar.Visibility = Visibility.Hidden;
-            txtProgresso.Visibility = Visibility.Visible;
+        catch (Win32Exception) when (IsWingetCommand(programa.Caminho))
+        {
+            programa.StatusExecucao = "WinGet indisponível";
+            AppendLog("WinGet não foi encontrado. Instale ou registre o App Installer do Windows e tente novamente.");
+            return false;
         }
-        else {
-            btnOK.Visibility = Visibility.Hidden;
-            txtProgresso.Visibility = Visibility.Hidden;
-            dtProgramas.Visibility = Visibility.Visible;
-            btnConfig.Visibility = Visibility.Visible;
-            btnInstalar.Visibility = Visibility.Visible;
-
-            txtProgresso.Text = string.Empty;
-        }
-    }
-
-    async Task<bool> IsWingetInstallNeeded()
-    {
-        try {
-            bool hasWingetCommand = false;
-            bool hasWingetInstalled = false;
-            
-            var listProgramas = dtProgramas.Items.SourceCollection as List<Programa>;
-
-            hasWingetCommand = listProgramas.Where(x => x.Caminho.ToLower().Contains("winget")).Any();
-
-            await Task.Run(() => {
-                using (Process process = new()) {
-                    process.StartInfo.FileName = "winget";
-                    process.StartInfo.Arguments = "";
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.RedirectStandardError = true;
-
-                    process.Start();
-                    process.WaitForExit();
-
-                    string standardOutput = process.StandardOutput.ReadToEnd();
-                    string errorOutput = process.StandardError.ReadToEnd();
-
-                    if(standardOutput.ToLower().Contains("uso: winget"))
-                        hasWingetInstalled = true;
-                }
-            });
-
-            return hasWingetCommand && !hasWingetInstalled;
-        }
-        catch (Exception ex) {
-            return true;
+        catch (Exception ex)
+        {
+            programa.StatusExecucao = "Falhou";
+            AppendLog($"Falha em {programa.Nome}: {ex.Message}");
+            return false;
         }
     }
 
-    async Task WingetInstall()
+    private static async Task<ProcessResult> RunProcessAsync(string fileName, string arguments)
     {
-        try {
-            txtProgresso.AppendText($"Instalando Winget...\n");
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new InvalidOperationException("O comando ou caminho do programa não foi informado.");
 
-            string output = string.Empty;
+        using Process process = new()
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = fileName.Trim(),
+                Arguments = arguments,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            }
+        };
 
-            output = await ExecuteCommand("powershell", "$ProgressPreference='Silent'");
-            txtProgresso.AppendText(output);
-            output = string.Empty;            
+        if (!process.Start())
+            throw new InvalidOperationException("Não foi possível iniciar o processo.");
 
-            output = await ExecuteCommand("powershell", "Invoke-WebRequest -Uri \"https://github.com/microsoft/winget-cli/releases/download/v1.1.12653/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle\" -OutFile .\\WinGet.msixbundle\"");
-            txtProgresso.AppendText(output);
-            output = string.Empty;            
+        Task<string> standardOutput = process.StandardOutput.ReadToEndAsync();
+        Task<string> standardError = process.StandardError.ReadToEndAsync();
 
-            output = await ExecuteCommand("powershell", "Invoke-WebRequest -Uri https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx -OutFile Microsoft.VCLibs.x64.14.00.Desktop.appx");
-            txtProgresso.AppendText(output);
-            output = string.Empty;           
+        await process.WaitForExitAsync();
+        await Task.WhenAll(standardOutput, standardError);
 
-            output = await ExecuteCommand("powershell", "Add-AppxPackage Microsoft.VCLibs.x64.14.00.Desktop.appx");
-            txtProgresso.AppendText(output);
-            output = string.Empty;
-
-            output = await ExecuteCommand("powershell", "Add-AppxPackage .\\WinGet.msixbundle");
-            txtProgresso.AppendText(output);
-            output = string.Empty;
-        }
-        catch (Exception ex) {
-            txtProgresso.AppendText($"{ex.Message}\n");
-        }
+        return new ProcessResult(process.ExitCode, standardOutput.Result, standardError.Result);
     }
 
-    async Task<string> ExecuteCommand(string fileName, string arguments)
+    private bool IsArchitectureCompatible(Programa programa) =>
+        (opt32bits.IsChecked == true && programa.x86 == "S") ||
+        (opt64bits.IsChecked == true && programa.x64 == "S");
+
+    private static bool IsWingetCommand(string command) =>
+        command.Contains("winget", StringComparison.OrdinalIgnoreCase);
+
+    private void SetBusyState(bool isBusy)
     {
-        try {
-            string output = string.Empty;
-
-            await Task.Run(() => {
-                using (Process process = new()) {
-                    process.StartInfo.FileName = fileName;
-                    process.StartInfo.Arguments = arguments;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.RedirectStandardError = true;
-
-                    process.Start();
-                    process.WaitForExit();
-
-                    string standardOutput = process.StandardOutput.ReadToEnd();
-                    string errorOutput = process.StandardError.ReadToEnd();
-
-                    int exitCode = process.ExitCode;
-
-                    if (exitCode != 0)
-                        output = $"{standardOutput} \n{errorOutput} \n";
-                }
-            });
-
-            return output;
-        }
-        catch (Exception ex) {
-            return $"{ex.Message}\n";
-        }
-
+        dtProgramas.IsEnabled = !isBusy;
+        btnInstalar.IsEnabled = !isBusy;
+        btnConfig.IsEnabled = !isBusy;
+        opt32bits.IsEnabled = !isBusy;
+        opt64bits.IsEnabled = !isBusy;
     }
-    #endregion
 
-    #region VALIDATIONS
-    bool IsArquituraChecked() =>
-        chk32bits.IsChecked == true || chk64bits.IsChecked == true;
+    private void UpdateSummary()
+    {
+        int active = _programas.ListaProgramas.Count(programa => programa.Ativo);
+        int inactive = _programas.ListaProgramas.Count - active;
 
-    bool is32bitsCommand(Programa programa) =>
-        programa.x86 == "S" && chk32bits.IsChecked == true;
+        txtAtivos.Text = $"{active} ativo(s)";
+        txtInativos.Text = $"{inactive} inativo(s)";
+        emptyMain.Visibility = _programas.ListaProgramas.Count == 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        btnInstalar.IsEnabled = active > 0;
+    }
 
-    bool is64BitsCommand(Programa programa) =>
-        programa.x64 == "S" && chk64bits.IsChecked == true;
-    #endregion
+    private void AppendLog(string message)
+    {
+        txtProgresso.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
+        txtProgresso.ScrollToEnd();
+    }
+
+    private sealed record ProcessResult(int ExitCode, string StandardOutput, string StandardError);
 }

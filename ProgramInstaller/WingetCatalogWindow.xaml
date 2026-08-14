@@ -1,0 +1,85 @@
+<Window x:Class="ProgramInstaller.WingetCatalogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Escolher no WinGet"
+        Height="650"
+        Width="650"
+        MinHeight="520"
+        MinWidth="540"
+        ResizeMode="CanResize"
+        ShowInTaskbar="False"
+        Icon="Assets/icone.ico"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Background="#172033" Padding="20,14">
+            <StackPanel>
+                <TextBlock Text="Escolher no WinGet" FontSize="22" FontWeight="SemiBold" Foreground="White"/>
+                <TextBlock Text="Pesquise pelo nome e toque no programa desejado"
+                           Margin="0,3,0,0" Foreground="#B9C4D5"/>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="16,12,16,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="txtPesquisa" MinHeight="42" Padding="11,6"
+                     ToolTip="Ex.: Chrome, VLC ou Microsoft Office"
+                     KeyDown="txtPesquisa_KeyDown"/>
+            <Button x:Name="btnPesquisar" Grid.Column="2" Content="Pesquisar"
+                    Style="{StaticResource PrimaryButton}" MinWidth="110"
+                    Click="btnPesquisar_Click"/>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="16,0,16,12">
+            <ListBox x:Name="lstResultados"
+                     Style="{StaticResource CardList}"
+                     ItemContainerStyle="{StaticResource CardListItem}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="White" BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1" CornerRadius="10" Padding="12,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Margin="0,3,0,0" Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="11" TextTrimming="CharacterEllipsis">
+                                        <Run Text="{Binding Id}"/><Run Text="  ·  versão "/><Run Text="{Binding Version}"/>
+                                    </TextBlock>
+                                    <TextBlock Text="O WinGet tentará instalar sem abrir assistentes."
+                                               Margin="0,3,0,0" FontSize="10"
+                                               Foreground="{StaticResource SuccessBrush}"/>
+                                </StackPanel>
+                                <Button Grid.Column="2" Content="Escolher"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Padding="12,5" MinHeight="34"
+                                        Click="btnEscolher_Click"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <StackPanel x:Name="emptyState" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock x:Name="txtEstado" Text="Digite o nome de um programa para pesquisar."
+                           Foreground="{StaticResource MutedTextBrush}" FontSize="13"
+                           TextAlignment="Center" TextWrapping="Wrap" MaxWidth="390"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

@@ -5,6 +5,18 @@
 
 O **ProgramInstaller** é uma ferramenta poderosa para automatizar a instalação de programas em seu sistema, proporcionando uma experiência de configuração rápida e padronizada.
 
+## Requisitos
+
+- Windows 10 22H2 ou Windows 11.
+- .NET Desktop Runtime 10 para executar uma publicação dependente do framework.
+- .NET SDK 10 para compilar o projeto.
+
+O SDK usado no desenvolvimento é selecionado pelo arquivo `global.json`. Para compilar em modo Release:
+
+```powershell
+dotnet build ProgramInstaller.sln --configuration Release
+```
+
 ### Por que usar o ProgramInstaller?
 
 - **Automatização eficiente:** O ProgramInstaller permite que você execute instaladores e executáveis em fila, com a capacidade de fornecer argumentos personalizados. Dessa forma, você pode automatizar o processo de instalação de vários programas sem esforço.
@@ -12,6 +24,10 @@ O **ProgramInstaller** é uma ferramenta poderosa para automatizar a instalaçã
 - **Padronização simplificada:** Com o ProgramInstaller, você pode garantir que todos os programas sejam instalados da mesma maneira, seguindo um padrão consistente. Isso ajuda a evitar configurações confusas ou erros durante a instalação.
 
 - **Experiência otimizada:** A interface intuitiva do ProgramInstaller facilita o gerenciamento de suas instalações de programas. Você pode configurar uma lista de programas a serem instalados, definir argumentos personalizados e acompanhar o progresso de cada instalação.
+
+- **Controle de disponibilidade:** Cada programa pode ser marcado como ativo ou inativo. Somente os ativos entram na execução em lote.
+
+- **Execução individual:** Qualquer linha pode ser executada separadamente, inclusive um programa inativo após confirmação.
 
 - **Suporte a instalações por winget:** O ProgramInstaller também oferece suporte a instalações utilizando o winget. Isso significa que você pode instalar programas sem a necessidade de ter os arquivos de instalação baixados, aproveitando a facilidade e a segurança oferecidas pelo winget.
 
@@ -21,11 +37,13 @@ O **ProgramInstaller** é uma ferramenta poderosa para automatizar a instalaçã
 
 2. Abra o ProgramInstaller e adicione os programas que deseja instalar à fila de instalação.
 
-3. Se necessário, defina argumentos personalizados para cada programa, permitindo configurações específicas, como "Silent Install", durante o processo de instação.
+3. Defina as arquiteturas compatíveis, o status ativo/inativo e, se necessário, os argumentos personalizados de execução.
 
-4. Inicie a instalação e acompanhe o progresso em tempo real. O ProgramInstaller cuidará de executar cada instalador na ordem correta.
+4. Execute todos os programas ativos ou use o botão **Executar** de uma linha específica.
 
-5. Desfrute de uma instalação automatizada e padronizada de seus programas favoritos!
+5. Acompanhe o resultado de cada programa e os detalhes no log em tempo real.
+
+6. Desfrute de uma instalação automatizada e padronizada de seus programas favoritos!
 
 ## Contribuindo
 
