@@ -4,6 +4,12 @@ namespace ProgramInstaller.Models;
 
 public static class DefaultProgramCatalog
 {
+    internal static readonly Guid AvastProgramId = Guid.Parse("7385dbd0-356f-4bba-ab76-2e378617a9fa");
+    internal const string AvastInstallArguments =
+        "install --id XPDNZJFNCR1B07 --accept-source-agreements --accept-package-agreements";
+    internal const string LegacyAvastInstallArguments =
+        "install --id XPDNZJFNCR1B07 -e --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity";
+
     public static Programas Create() =>
         new()
         {
@@ -42,10 +48,10 @@ public static class DefaultProgramCatalog
                 },
                 new Programa
                 {
-                    Id = Guid.Parse("7385dbd0-356f-4bba-ab76-2e378617a9fa"),
+                    Id = AvastProgramId,
                     Nome = "Avast Free",
                     Caminho = "winget",
-                    Argumentos = "install --id XPDNZJFNCR1B07 -e --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity",
+                    Argumentos = AvastInstallArguments,
                     x86 = "S",
                     x64 = "S",
                     Ativo = true

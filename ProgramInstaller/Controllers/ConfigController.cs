@@ -43,7 +43,7 @@ public sealed class ConfigController
                 programas = Serializer.Deserialize(stream) as Programas ?? new Programas();
             }
 
-            if (MigrateHashOverride(programas))
+            if (MigrateConfiguration(programas))
                 Save(programas);
 
             return programas;
@@ -63,7 +63,7 @@ public sealed class ConfigController
     public void Save(Programas programas)
     {
         Directory.CreateDirectory(ConfigDirectory);
-        MigrateHashOverride(programas);
+        MigrateConfiguration(programas);
 
         string temporaryPath = $"{FullPath}.tmp";
         XmlSerializerNamespaces namespaces = new();
@@ -92,6 +92,25 @@ public sealed class ConfigController
 
         return changed;
     }
+
+    private static bool MigrateAvastPreset(Programas programas)
+    {
+        Programa? avast = programas.ListaProgramas.FirstOrDefault(
+            programa => programa.Id == DefaultProgramCatalog.AvastProgramId);
+
+        if (avast is null ||
+            !IsWingetCommand(avast.Caminho) ||
+            !avast.Argumentos.Equals(
+                DefaultProgramCatalog.LegacyAvastInstallArguments,
+                StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        avast.Argumentos = DefaultProgramCatalog.AvastInstallArguments;
+        return true;
+    }
+
+    private static bool MigrateConfiguration(Programas programas) =>
+        MigrateHashOverride(programas) | MigrateAvastPreset(programas);
 
     private static bool IsWingetCommand(string command) =>
         command.Trim().Equals("winget", StringComparison.OrdinalIgnoreCase) ||
